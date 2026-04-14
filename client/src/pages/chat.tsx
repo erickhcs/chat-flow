@@ -1,0 +1,66 @@
+import { ChatList } from "@/components/chatList";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import useFetch from "@/hooks/useFetch";
+import type { Chat } from "@/types";
+import { useEffect, useState } from "react";
+
+const ChatPage = () => {
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [selectedChat, setSelectedChat] = useState<Chat>();
+  const { fetchApiWithAuth } = useFetch();
+
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        const response = await fetchApiWithAuth("http://localhost:3000/rooms");
+        if (!response) return;
+        console.log("Response: ", response);
+        const data = await response.json();
+        console.log("Data: ", data);
+        setChats(data);
+      } catch (error) {
+        console.error("Error fetching chats: ", error);
+      }
+    };
+
+    fetchChats();
+  }, []);
+
+  return (
+    <div className="flex flex-row w-full h-full">
+      <aside className="w-1/4 p-4">
+        <h2>Chats</h2>
+        <div className="flex gap-1 flex-col">
+          {chats.map((chat) => (
+            <div
+              key={chat.id}
+              onClick={() => setSelectedChat(chat)}
+              className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-2 rounded-sm"
+            >
+              <Avatar>
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="@shadcn"
+                  className="grayscale"
+                />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+
+              <p>{chat.name}</p>
+            </div>
+          ))}
+        </div>
+      </aside>
+      <hr className="h-full w-px bg-white" />
+      <div className="w-3/4 p-4">
+        {selectedChat ? (
+          <ChatList selectedChat={selectedChat} />
+        ) : (
+          <h2>Chat Window</h2>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ChatPage;
