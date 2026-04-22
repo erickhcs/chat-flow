@@ -4,7 +4,7 @@ import MessageHandler from "./messageHandler";
 import { AuthedWebSocket } from "./types";
 
 const wss = new WebSocketServer({
-  port: (process.env.WS_PORT as unknown as number) || 5000,
+  port: (process.env.PORT as unknown as number) || 5000,
 });
 
 wss.on("listening", () => {
