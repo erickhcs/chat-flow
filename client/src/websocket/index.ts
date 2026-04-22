@@ -12,7 +12,7 @@ class WebSocketClient {
   private constructor(
     token: string,
     onReceiveMessage: MessageHandler,
-    url: string = import.meta.env.VITE_WS_URL || "ws://localhost:5000",
+    url: string = import.meta.env.VITE_WS_URL,
   ) {
     this.socket = new WebSocket(url);
     this.token = token;

@@ -12,7 +12,9 @@ const ChatPage = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const response = await fetchApiWithAuth("http://localhost:3000/rooms");
+        const response = await fetchApiWithAuth(
+          `${import.meta.env.VITE_API_URL}/rooms`,
+        );
         if (!response) return;
         console.log("Response: ", response);
         const data = await response.json();

@@ -38,7 +38,7 @@ const ChatList = ({ selectedChat }: ChatProps) => {
         setIsLoading(true);
 
         const response = await fetchApiWithAuth(
-          `http://localhost:3000/messages/${selectedChat.id}`,
+          `${import.meta.env.VITE_API_URL}/messages/${selectedChat.id}`,
         );
         if (!response) return;
         console.log("Response: ", response);

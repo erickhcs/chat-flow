@@ -33,13 +33,16 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     setIsAuthenticating(true);
 
     try {
-      const response = await fetchApi("http://localhost:3000/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetchApi(
+        `${import.meta.env.VITE_API_URL}/users/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
         },
-        body: JSON.stringify({ email, password }),
-      });
+      );
 
       const data = await response.json();
 
