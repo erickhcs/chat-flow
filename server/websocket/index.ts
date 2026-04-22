@@ -3,7 +3,7 @@ import { loadEnvFile } from "node:process";
 import MessageHandler from "./messageHandler";
 import { AuthedWebSocket } from "./types";
 
-loadEnvFile(".env");
+loadEnvFile("../.env");
 
 const wss = new WebSocketServer({
   port: (process.env.WS_PORT as unknown as number) || 5000,
