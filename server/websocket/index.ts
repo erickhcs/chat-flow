@@ -1,7 +1,7 @@
 import { WebSocketServer } from "ws";
 import { loadEnvFile } from "node:process";
 import MessageHandler from "./messageHandler";
-import ConnectionsManager from "./connectionsManager";
+import { AuthedWebSocket } from "./types";
 
 loadEnvFile(".env");
 
@@ -13,7 +13,7 @@ wss.on("listening", () => {
   console.log("Websocket server is open and ready to accept connections!");
 });
 
-wss.on("connection", async (ws) => {
+wss.on("connection", async (ws: AuthedWebSocket) => {
   ws.on("message", (message: string) => {
     MessageHandler.handleMessage(ws, message);
   });

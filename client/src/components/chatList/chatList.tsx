@@ -1,8 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Chat, Message } from "@/types";
+import type { Chat, Message, User } from "@/types";
 import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +15,11 @@ type ChatProps = {
 const ChatList = ({ selectedChat }: ChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [searchParams] = useSearchParams();
   const [newMessage, setNewMessage] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const userId = searchParams.get("userId");
   const { fetchApiWithAuth } = useFetch();
+  const token = localStorage.getItem("token") || "";
+  const user: User = JSON.parse(localStorage.getItem("user") || "{}");
 
   const handleReceiveMessage = useCallback(
     (message: Message) => {
@@ -54,28 +53,22 @@ const ChatList = ({ selectedChat }: ChatProps) => {
     };
 
     const connectWebSocket = () => {
-      WebSocketClient.getInstance(
-        Number(userId),
-        handleReceiveMessage,
-      ).joinRoom(selectedChat.id);
+      WebSocketClient.getInstance(handleReceiveMessage, token).joinRoom(
+        selectedChat.id,
+      );
     };
 
     connectWebSocket();
     fetchMessages();
 
-    // return () => {
-    //   WebSocketClient.getInstance(
-    //     Number(userId),
-    //     handleReceiveMessage,
-    //   ).disconnect();
-    // };
-  }, [selectedChat, userId, handleReceiveMessage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChat, token, handleReceiveMessage]);
 
   const handleSendMessage = () => {
-    WebSocketClient.getInstance(
-      Number(userId),
-      handleReceiveMessage,
-    ).sendMessage(newMessage, selectedChat.id);
+    WebSocketClient.getInstance(handleReceiveMessage, token).sendMessage(
+      newMessage,
+      selectedChat.id,
+    );
 
     setNewMessage("");
   };
@@ -120,7 +113,7 @@ const ChatList = ({ selectedChat }: ChatProps) => {
               key={message.id}
               className={clsx(
                 "p-2 rounded w-1/2 flex flex-col",
-                message.userId === Number(userId)
+                message.userId === user.id
                   ? "self-end bg-gray-900"
                   : "self-start bg-gray-600",
               )}

@@ -10,3 +10,9 @@ export type Message = {
   roomId: number;
   createdAt: string;
 };
+
+export type User = {
+  id: number;
+  name: string;
+  email: string;
+};

@@ -1,13 +1,14 @@
-import type WebSocket from "ws";
+import { AuthedWebSocket } from "./types";
 
 class ConnectionsManager {
-  private clients: Map<number, WebSocket>;
+  private clients: Map<number, AuthedWebSocket>;
 
   constructor() {
-    this.clients = new Map<number, WebSocket>();
+    this.clients = new Map<number, AuthedWebSocket>();
   }
 
-  addClient(id: number, ws: WebSocket) {
+  addClient(ws: AuthedWebSocket) {
+    const id = ws.user?.id || 0;
     this.clients.set(id, ws);
   }
 

@@ -45,6 +45,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
       if (response.ok && data.token) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
         onLoginSuccess();
         navigate("/chats", { replace: true });
         return;

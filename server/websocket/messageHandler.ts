@@ -3,17 +3,48 @@ import ConnectionsManager from "./connectionsManager";
 import WebSocket from "ws";
 import type { WSMessage } from "../../types";
 import MessageService from "../services/messageService";
+import jwt from "jsonwebtoken";
+import { AuthedWebSocket } from "./types";
 
 let roomId = 1;
 
 class MessageHandler {
-  static async handleMessage(ws: WebSocket, data: string) {
+  static async handleMessage(ws: AuthedWebSocket, data: string) {
     const message: WSMessage = JSON.parse(data);
 
+    if (message.type !== "auth" && !ws.isAuthenticated) {
+      console.log("Unauthorized message received: ", message);
+      ws.send(JSON.stringify({ type: "error", content: "Unauthorized" }));
+      ws.close();
+      return;
+    }
+
     switch (message.type) {
+      case "auth": {
+        try {
+          const decoded = jwt.verify(
+            message.token || "",
+            `${process.env.JWT_SECRET}`,
+          ) as { userId: number };
+
+          ws.user = { id: decoded.userId };
+          ws.isAuthenticated = true;
+          console.log(`User ${decoded.userId} authenticated successfully.`);
+        } catch {
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Invalid token",
+            }),
+          );
+          ws.close();
+        }
+
+        break;
+      }
       case "join_room":
-        RoomManager.joinRoom(roomId, message.userId);
-        ConnectionsManager.addClient(message.userId, ws);
+        RoomManager.joinRoom(roomId, ws.user.id);
+        ConnectionsManager.addClient(ws);
 
         break;
 
@@ -21,14 +52,13 @@ class MessageHandler {
         try {
           const usersInRoom = RoomManager.getUsersInRoom(message.roomId);
           const createdMessage = await MessageService.createMessage({
-            userId: message.userId,
+            userId: ws.user.id,
             roomId: message.roomId,
             content: message.content as string,
           });
 
           usersInRoom.forEach((userId) => {
             const client = ConnectionsManager.getClient(userId);
-            console.log("Client to send message: ", client, userId);
             if (client?.readyState === WebSocket.OPEN) {
               client.send(
                 JSON.stringify({

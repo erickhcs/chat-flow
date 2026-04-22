@@ -6,17 +6,16 @@ type MessageHandler = (message: Message) => void;
 class WebSocketClient {
   private static instance: WebSocketClient | null = null;
   private socket: WebSocket;
-  private userId: number;
   private pendingMessages: string[] = [];
+  private token: string;
 
   private constructor(
-    userId: number,
-    url: string = import.meta.env.VITE_WS_URL || "ws://localhost:5000",
+    token: string,
     onReceiveMessage: MessageHandler,
+    url: string = import.meta.env.VITE_WS_URL || "ws://localhost:5000",
   ) {
     this.socket = new WebSocket(url);
-    this.userId = userId;
-
+    this.token = token;
     this.socket.addEventListener("message", (event) =>
       this.handleMessage(event, onReceiveMessage),
     );
@@ -25,15 +24,15 @@ class WebSocketClient {
   }
 
   public static getInstance(
-    userId: number,
     onReceiveMessage: MessageHandler,
+    token: string,
     url?: string,
   ) {
     if (!WebSocketClient.instance) {
       WebSocketClient.instance = new WebSocketClient(
-        userId,
-        url,
+        token,
         onReceiveMessage,
+        url,
       );
     }
 
@@ -44,13 +43,19 @@ class WebSocketClient {
     const message: WSMessage = {
       type: "join_room",
       roomId,
-      userId: this.userId,
     };
 
     this.sendWhenOpen(message);
   }
 
   private handleOpen = () => {
+    const authMessage: WSMessage = {
+      type: "auth",
+      token: this.token,
+    };
+
+    this.sendWhenOpen(authMessage);
+
     if (this.pendingMessages.length === 0) {
       return;
     }
@@ -98,7 +103,6 @@ class WebSocketClient {
       type: "message",
       content,
       roomId,
-      userId: this.userId,
     };
 
     this.sendWhenOpen(message);
