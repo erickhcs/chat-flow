@@ -4,42 +4,33 @@ import type { WSMessage } from "../../../types";
 type MessageHandler = (message: Message) => void;
 
 class WebSocketClient {
-  private static instance: WebSocketClient | null = null;
-  private socket: WebSocket;
+  private socket: WebSocket | null = null;
   private pendingMessages: string[] = [];
-  private token: string;
+  private reconnectTimeout: number | null = null;
+  private retryCount = 0;
+  private messageHandler?: MessageHandler;
+  private joinedRooms: Set<number> = new Set();
 
-  private constructor(
-    token: string,
-    onReceiveMessage: MessageHandler,
-    url: string = import.meta.env.VITE_WS_URL,
+  public connect(
+    messageHandler: MessageHandler,
+    url = import.meta.env.VITE_WS_URL,
   ) {
+    this.messageHandler = messageHandler;
     this.socket = new WebSocket(url);
-    this.token = token;
-    this.socket.addEventListener("message", (event) =>
-      this.handleMessage(event, onReceiveMessage),
-    );
+    this.socket.addEventListener("message", (event) => {
+      return this.handleMessage(event, messageHandler);
+    });
     this.socket.addEventListener("open", this.handleOpen);
     this.socket.addEventListener("close", this.handleClose);
-  }
 
-  public static getInstance(
-    onReceiveMessage: MessageHandler,
-    token: string,
-    url?: string,
-  ) {
-    if (!WebSocketClient.instance) {
-      WebSocketClient.instance = new WebSocketClient(
-        token,
-        onReceiveMessage,
-        url,
-      );
-    }
-
-    return WebSocketClient.instance;
+    this.joinedRooms.forEach((roomId) => {
+      this.joinRoom(roomId);
+    });
   }
 
   public joinRoom(roomId: number) {
+    this.joinedRooms.add(roomId);
+
     const message: WSMessage = {
       type: "join_room",
       roomId,
@@ -49,9 +40,13 @@ class WebSocketClient {
   }
 
   private handleOpen = () => {
+    this.retryCount = 0;
+
+    const token = localStorage.getItem("token") || "";
+
     const authMessage: WSMessage = {
       type: "auth",
-      token: this.token,
+      token: token,
     };
 
     this.sendWhenOpen(authMessage);
@@ -61,15 +56,19 @@ class WebSocketClient {
     }
 
     for (const pendingMessage of this.pendingMessages) {
-      this.socket.send(pendingMessage);
+      this.socket?.send(pendingMessage);
     }
 
     this.pendingMessages = [];
   };
 
-  private handleClose = (event: CloseEvent) => {
-    console.log("Websocket connection closed: ", event.code, event.reason);
-    WebSocketClient.instance = null;
+  private handleClose = () => {
+    const delay = Math.min(1000 * 2 ** this.retryCount, 10000);
+
+    this.reconnectTimeout = setTimeout(() => {
+      this.retryCount++;
+      this.connect(this.messageHandler as MessageHandler);
+    }, delay);
   };
 
   private handleMessage = (
@@ -81,7 +80,6 @@ class WebSocketClient {
 
       switch (message.type) {
         case "message":
-          console.log("Received message: ", message.content);
           onReceiveMessage(message.content as Message);
           break;
       }
@@ -91,11 +89,14 @@ class WebSocketClient {
   };
 
   public disconnect() {
-    if (this.socket.readyState === WebSocket.CLOSED) {
-      return;
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
     }
 
-    this.socket.close();
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
   }
 
   public sendMessage(content: string, roomId: number) {
@@ -111,16 +112,16 @@ class WebSocketClient {
   private sendWhenOpen(message: WSMessage) {
     const payload = JSON.stringify(message);
 
-    if (this.socket.readyState === WebSocket.OPEN) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(payload);
       return;
     }
 
-    if (this.socket.readyState === WebSocket.CONNECTING) {
+    if (this.socket?.readyState === WebSocket.CONNECTING) {
       this.pendingMessages.push(payload);
       return;
     }
   }
 }
 
-export default WebSocketClient;
+export const webSocketClient = new WebSocketClient();

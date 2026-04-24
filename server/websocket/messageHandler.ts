@@ -13,7 +13,6 @@ class MessageHandler {
     const message: WSMessage = JSON.parse(data);
 
     if (message.type !== "auth" && !ws.isAuthenticated) {
-      console.log("Unauthorized message received: ", message);
       ws.send(JSON.stringify({ type: "error", content: "Unauthorized" }));
       ws.close();
       return;
@@ -29,7 +28,6 @@ class MessageHandler {
 
           ws.user = { id: decoded.userId };
           ws.isAuthenticated = true;
-          console.log(`User ${decoded.userId} authenticated successfully.`);
         } catch {
           ws.send(
             JSON.stringify({

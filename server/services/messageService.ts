@@ -18,6 +18,14 @@ class MessageService {
         room: { connect: { id: roomId } },
         user: { connect: { id: userId } },
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     return message;

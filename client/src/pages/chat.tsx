@@ -16,9 +16,7 @@ const ChatPage = () => {
           `${import.meta.env.VITE_API_URL}/rooms`,
         );
         if (!response) return;
-        console.log("Response: ", response);
         const data = await response.json();
-        console.log("Data: ", data);
         setChats(data);
       } catch (error) {
         console.error("Error fetching chats: ", error);
@@ -26,6 +24,7 @@ const ChatPage = () => {
     };
 
     fetchChats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

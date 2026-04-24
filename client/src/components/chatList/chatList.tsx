@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import WebSocketClient from "@/websocket";
+import { webSocketClient } from "@/websocket";
 import useFetch from "@/hooks/useFetch";
 
 type ChatProps = {
@@ -20,7 +20,6 @@ const ChatList = ({ selectedChat }: ChatProps) => {
   const { fetchApiWithAuth } = useFetch();
   const token = localStorage.getItem("token") || "";
   const user: User = JSON.parse(localStorage.getItem("user") || "{}");
-
   const handleReceiveMessage = useCallback(
     (message: Message) => {
       if (message.roomId === selectedChat.id) {
@@ -41,9 +40,7 @@ const ChatList = ({ selectedChat }: ChatProps) => {
           `${import.meta.env.VITE_API_URL}/messages/${selectedChat.id}`,
         );
         if (!response) return;
-        console.log("Response: ", response);
         const data = await response.json();
-        console.log("Data: ", data);
         setMessages(data);
       } catch (error) {
         console.error("Error fetching chat messages: ", error);
@@ -52,26 +49,25 @@ const ChatList = ({ selectedChat }: ChatProps) => {
       }
     };
 
-    const connectWebSocket = () => {
-      WebSocketClient.getInstance(handleReceiveMessage, token).joinRoom(
-        selectedChat.id,
-      );
-    };
-
-    connectWebSocket();
     fetchMessages();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat, token, handleReceiveMessage]);
+  }, [selectedChat, token]);
 
   const handleSendMessage = () => {
-    WebSocketClient.getInstance(handleReceiveMessage, token).sendMessage(
-      newMessage,
-      selectedChat.id,
-    );
+    webSocketClient.sendMessage(newMessage, selectedChat.id);
 
     setNewMessage("");
   };
+
+  useEffect(() => {
+    webSocketClient.connect(handleReceiveMessage);
+    webSocketClient.joinRoom(selectedChat.id);
+
+    return () => {
+      webSocketClient.disconnect();
+    };
+  }, [handleReceiveMessage, selectedChat.id]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -119,11 +115,11 @@ const ChatList = ({ selectedChat }: ChatProps) => {
               )}
             >
               {message.userId !== user.id && (
-                <p className="font-bold self-start text-blue-500">
+                <p className="font-bold self-start text-start text-blue-500">
                   {message.user.name}
                 </p>
               )}
-              <p className="self-start">{message.content}</p>
+              <p className="self-start text-start">{message.content}</p>
               <p className="text-sm text-gray-400 self-end">
                 {new Date(message.createdAt).toLocaleTimeString(
                   navigator.language,
