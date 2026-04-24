@@ -118,6 +118,11 @@ const ChatList = ({ selectedChat }: ChatProps) => {
                   : "self-start bg-gray-600",
               )}
             >
+              {message.userId !== user.id && (
+                <p className="font-bold self-start text-blue-500">
+                  {message.user.name}
+                </p>
+              )}
               <p className="self-start">{message.content}</p>
               <p className="text-sm text-gray-400 self-end">
                 {new Date(message.createdAt).toLocaleTimeString(

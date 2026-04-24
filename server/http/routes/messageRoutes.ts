@@ -11,6 +11,14 @@ router.get("/:roomId", authMiddleware, async (req, res) => {
   const messages = await prisma.message.findMany({
     where: { roomId },
     orderBy: { createdAt: "asc" },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
   });
 
   res.json(messages);
