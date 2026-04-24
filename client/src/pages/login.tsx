@@ -14,17 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import useFetch from "@/hooks/useFetch";
+import { useUserContext } from "@/contexts/hooks/user";
 
-type LoginPageProps = {
-  onLoginSuccess: () => void;
-};
-
-const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
+const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const { fetchApi } = useFetch();
+  const { setUser, setToken, setIsAuthenticated } = useUserContext();
 
   const navigate = useNavigate();
 
@@ -49,8 +47,11 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       if (response.ok && data.token) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        onLoginSuccess();
+        setToken(data.token);
+        setUser(data.user);
+        setIsAuthenticated(true);
         navigate("/chats", { replace: true });
+
         return;
       }
 

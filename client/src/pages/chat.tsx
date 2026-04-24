@@ -37,7 +37,7 @@ const ChatPage = () => {
             <div
               key={chat.id}
               onClick={() => setSelectedChat(chat)}
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-2 rounded-sm"
+              className="flex flex-col sm:flex-row items-center gap-2 cursor-pointer hover:bg-gray-600 p-2 rounded-sm"
             >
               <Avatar>
                 <AvatarImage

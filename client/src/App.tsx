@@ -1,17 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
 import ChatPage from "@/pages/chat";
 import LoginPage from "@/pages/login";
+import useUserContext from "./contexts/hooks/user";
 import "./App.css";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() =>
-    Boolean(localStorage.getItem("token")),
-  );
-
-  const handleLoginSuccess = () => {
-    setIsAuthenticated(true);
-  };
+  const { isAuthenticated } = useUserContext();
 
   return (
     <Routes>
@@ -23,13 +17,7 @@ function App() {
       />
       <Route
         path="/login"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/chats" />
-          ) : (
-            <LoginPage onLoginSuccess={handleLoginSuccess} />
-          )
-        }
+        element={isAuthenticated ? <Navigate to="/chats" /> : <LoginPage />}
       />
       <Route
         path="/chats"
