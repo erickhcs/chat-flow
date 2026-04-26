@@ -5,6 +5,7 @@ import type { Chat } from "@/types";
 import { useEffect, useState } from "react";
 
 import { ActionsHeader } from "@/components/actionsHeader";
+import clsx from "clsx";
 
 const ChatPage = () => {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -49,7 +50,10 @@ const ChatPage = () => {
                 <div
                   key={chat.id}
                   onClick={() => setSelectedChat(chat)}
-                  className="flex flex-col sm:flex-row items-center gap-2 cursor-pointer hover:bg-gray-600 p-2 rounded-sm"
+                  className={clsx(
+                    "flex flex-col sm:flex-row items-center gap-2 cursor-pointer hover:bg-gray-700 p-2 rounded-sm",
+                    selectedChat?.id === chat.id && "bg-gray-600",
+                  )}
                 >
                   <Avatar>
                     <AvatarImage
