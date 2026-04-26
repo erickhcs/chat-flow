@@ -28,7 +28,9 @@ It was designed to demonstrate practical product engineering skills recruiters c
 ## 🔥 Core Features
 
 - 🔐 Login with JWT-based authentication
+- 🆕 Sign-up flow in frontend with automatic authentication after account creation
 - 🛡️ Protected routes in the frontend and protected API endpoints in the backend
+- ✅ Client-side form validation with Zod + react-hook-form (login and sign-up)
 - 🧭 Chat room listing and room selection UI
 - 🕘 Message history loading per room
 - ⚡ Live message delivery over WebSocket
@@ -58,7 +60,7 @@ It was designed to demonstrate practical product engineering skills recruiters c
 
 ## 🧰 Tech Stack
 
-- 🎨 Frontend: React 19, Vite 8, TypeScript 6, Tailwind CSS, Radix-based UI components
+- 🎨 Frontend: React 19, Vite 8, TypeScript 6, Tailwind CSS, Radix-based UI components, react-hook-form, Zod, @hookform/resolvers
 - ⚙️ Backend: Node.js, Express 5, ws, TypeScript 6
 - 🔐 Auth: JSON Web Tokens + bcrypt
 - 🗄️ Database: PostgreSQL + Prisma
@@ -121,7 +123,7 @@ Frontend default URL: http://localhost:5173
 
 ### Auth
 
-- POST /users/register
+- POST /users/signup
 - POST /users/login
 
 ### Rooms
@@ -154,12 +156,12 @@ Authorization: Bearer YOUR_JWT_TOKEN
 
 ## 📝 Notes
 
-- Current UI is login-first; registration exists at the API level.
+- Auth UI includes tabbed Login and Sign Up flows.
 - Real-time chat delivery is implemented with ws events and persisted through Prisma.
 
 ## 🛣️ Roadmap
 
-- 👤 Signup page in frontend
+- ✅ Signup page in frontend
 - ✅ Message delivery/read status
 - 🟢 Presence indicators (online/typing)
 - 🧪 Unit and integration tests

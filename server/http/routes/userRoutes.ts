@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
   res.json(users);
 });
 
-router.post("/register", async (req, res) => {
+router.post("/signup", async (req, res) => {
   const { name, email, password } = req.body;
 
   const hashed = await bcrypt.hash(password, 10);
@@ -22,7 +22,14 @@ router.post("/register", async (req, res) => {
     data: { name, email, password: hashed },
   });
 
-  res.json(user);
+  const token = jwt.sign({ userId: user.id }, `${process.env.JWT_SECRET}`, {
+    expiresIn: "1d",
+  });
+
+  res.json({
+    token,
+    user: { id: user.id, name: user.name, email: user.email },
+  });
 });
 
 router.post("/login", async (req, res) => {
