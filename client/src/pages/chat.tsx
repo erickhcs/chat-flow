@@ -5,7 +5,7 @@ import useUserContext from "@/contexts/hooks/user";
 import useFetch from "@/hooks/useFetch";
 import type { Chat } from "@/types";
 import { useEffect, useState } from "react";
-import { SquareArrowRightExit } from "lucide-react";
+import { SquareArrowRightExit, MessageCirclePlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,35 +15,96 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import z from "zod";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const createChatSchema = z.object({
+  name: z.string().min(5, "Chat name must be at least 5 characters"),
+});
+
+type CreateChatFormData = z.infer<typeof createChatSchema>;
 
 const ChatPage = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat>();
   const [isOpenLogoutDialog, setIsOpenLogoutDialog] = useState(false);
   const { fetchApiWithAuth } = useFetch();
+  const [isOpenCreateChatDrawer, setIsOpenCreateChatDrawer] = useState(false);
   const { user, setUser, setIsAuthenticated, setToken } = useUserContext();
   const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateChatFormData>({
+    resolver: zodResolver(createChatSchema),
+    defaultValues: { name: "" },
+  });
+
+  const fetchChats = async () => {
+    try {
+      const response = await fetchApiWithAuth(
+        `${import.meta.env.VITE_API_URL}/rooms`,
+      );
+      if (!response) return;
+      const data = await response.json();
+      setChats(data);
+    } catch (error) {
+      console.error("Error fetching chats: ", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const response = await fetchApiWithAuth(
-          `${import.meta.env.VITE_API_URL}/rooms`,
-        );
-        if (!response) return;
-        const data = await response.json();
-        setChats(data);
-      } catch (error) {
-        console.error("Error fetching chats: ", error);
-      }
-    };
-
     fetchChats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClickLogoutButton = () => {
     setIsOpenLogoutDialog(true);
+  };
+
+  const handleClickCreateChatButton = () => {
+    setIsOpenCreateChatDrawer(true);
+  };
+
+  const handleCreateChat = async (data: CreateChatFormData) => {
+    try {
+      const response = await fetchApiWithAuth(
+        `${import.meta.env.VITE_API_URL}/rooms`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        },
+      );
+
+      if (!response) return;
+
+      const newChat = await response.json();
+      setChats((prevChats) => [...prevChats, newChat]);
+      setSelectedChat(newChat);
+      setIsOpenCreateChatDrawer(false);
+
+      reset();
+    } catch (error) {
+      console.error("Error creating chat: ", error);
+    }
   };
 
   const handleConfirmLogout = () => {
@@ -60,7 +121,17 @@ const ChatPage = () => {
     <>
       <div className="flex flex-col overflow-y-auto">
         <div className="bg-gray-600 p-3 flex justify-between">
-          <p>{user?.name}</p>
+          <div className="flex items-center gap-5">
+            <p>{user?.name}</p>
+            <Button
+              onClick={handleClickCreateChatButton}
+              variant="outline"
+              size="icon"
+              className="cursor-pointer"
+            >
+              <MessageCirclePlus />
+            </Button>
+          </div>
           <Button
             onClick={handleClickLogoutButton}
             variant="outline"
@@ -130,6 +201,62 @@ const ChatPage = () => {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+
+      <Drawer
+        direction="left"
+        open={isOpenCreateChatDrawer}
+        onOpenChange={setIsOpenCreateChatDrawer}
+      >
+        <DrawerContent>
+          <form onSubmit={handleSubmit(handleCreateChat)}>
+            <DrawerHeader>
+              <DrawerTitle>Create Chat</DrawerTitle>
+              <DrawerDescription>
+                Enter the details for the new chat below.
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4">
+              <Label htmlFor="email">Chat name</Label>
+              <Input
+                disabled={isSubmitting}
+                {...register("name")}
+                id="name"
+                type="text"
+                className="mt-4"
+                placeholder="Chat name"
+              />
+              {errors.name && (
+                <p className="text-red-500 text-sm pt-2">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+            <DrawerFooter className="flex">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="cursor-pointer w-full"
+              >
+                Create
+              </Button>
+              <DrawerClose asChild>
+                <Button
+                  className="cursor-pointer"
+                  variant="secondary"
+                  disabled={isSubmitting}
+                  onClick={() => {
+                    reset();
+                    clearErrors();
+                    setIsOpenCreateChatDrawer(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </form>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 };

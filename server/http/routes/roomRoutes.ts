@@ -8,7 +8,7 @@ router.post("/", authMiddleware, async (req, res) => {
   const { name } = req.body;
 
   const room = await prisma.room.create({
-    data: { name },
+    data: { name, users: { create: { userId: req.userId! } } },
   });
 
   res.json(room);

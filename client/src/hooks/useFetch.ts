@@ -11,7 +11,7 @@ const useFetch = () => {
     return response;
   };
 
-  const fetchApiWithAuth = async (url: string) => {
+  const fetchApiWithAuth = async (url: string, options: RequestInit = {}) => {
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -20,7 +20,9 @@ const useFetch = () => {
     }
 
     const res = await fetch(url, {
+      ...options,
       headers: {
+        ...options.headers,
         Authorization: `Bearer ${token}`,
       },
     });

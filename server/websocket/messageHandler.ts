@@ -6,8 +6,6 @@ import MessageService from "../services/messageService";
 import jwt from "jsonwebtoken";
 import { AuthedWebSocket } from "./types";
 
-let roomId = 1;
-
 class MessageHandler {
   static async handleMessage(ws: AuthedWebSocket, data: string) {
     const message: WSMessage = JSON.parse(data);
@@ -41,7 +39,7 @@ class MessageHandler {
         break;
       }
       case "join_room":
-        RoomManager.joinRoom(roomId, ws.user.id);
+        RoomManager.joinRoom(message.roomId, ws.user.id);
         ConnectionsManager.addClient(ws);
 
         break;
