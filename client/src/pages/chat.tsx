@@ -28,8 +28,8 @@ const ChatPage = () => {
   }, []);
 
   return (
-    <div className="flex flex-row w-full h-full">
-      <aside className="w-1/4 p-4">
+    <div className="flex h-dvh w-full min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <aside className="chat-scroll h-full w-1/4 overflow-y-auto p-4">
         <h2>Chats</h2>
         <div className="flex gap-1 flex-col">
           {chats.map((chat) => (
@@ -53,7 +53,7 @@ const ChatPage = () => {
         </div>
       </aside>
       <hr className="h-full w-px bg-white" />
-      <div className="w-3/4 p-4">
+      <div className="h-full w-3/4 min-h-0 p-4">
         {selectedChat ? (
           <ChatList selectedChat={selectedChat} />
         ) : (

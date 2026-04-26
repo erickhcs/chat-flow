@@ -96,13 +96,13 @@ const ChatList = ({ selectedChat }: ChatProps) => {
   }
 
   return (
-    <div className="flex flex-col justify-between h-full">
-      <div>
+    <div className="flex h-full min-h-0 flex-col justify-between gap-4">
+      <div className="flex min-h-0 flex-1 flex-col">
         <p>{selectedChat.name}</p>
         <div
           id="chat-messages"
           ref={messagesContainerRef}
-          className="flex flex-col gap-4 mt-2 max-h-[87vh] overflow-y-auto"
+          className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1"
         >
           {messages.map((message) => (
             <div
@@ -134,7 +134,7 @@ const ChatList = ({ selectedChat }: ChatProps) => {
           ))}
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 pb-[env(safe-area-inset-bottom)]">
         <Input
           value={newMessage}
           onKeyUp={(e) => {
