@@ -20,7 +20,7 @@ const LoginPage = () => {
             value={authPage}
             onValueChange={(value) => setAuthPage(value)}
           >
-            <TabsList>
+            <TabsList className="w-full">
               <TabsTrigger value="login" className="cursor-pointer">
                 Login
               </TabsTrigger>

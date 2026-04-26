@@ -10,11 +10,13 @@ class WebSocketClient {
   private retryCount = 0;
   private messageHandler?: MessageHandler;
   private joinedRooms: Set<number> = new Set();
+  private isManuallyClosed = false;
 
   public connect(
     messageHandler: MessageHandler,
     url = import.meta.env.VITE_WS_URL,
   ) {
+    this.isManuallyClosed = false;
     this.messageHandler = messageHandler;
     this.socket = new WebSocket(url);
     this.socket.addEventListener("message", (event) => {
@@ -63,6 +65,10 @@ class WebSocketClient {
   };
 
   private handleClose = () => {
+    if (this.isManuallyClosed) {
+      return;
+    }
+
     const delay = Math.min(1000 * 2 ** this.retryCount, 10000);
 
     this.reconnectTimeout = setTimeout(() => {
@@ -89,6 +95,8 @@ class WebSocketClient {
   };
 
   public disconnect() {
+    this.isManuallyClosed = true;
+
     if (this.socket) {
       this.socket.close();
       this.socket = null;
