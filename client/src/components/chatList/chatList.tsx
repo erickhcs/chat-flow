@@ -12,6 +12,22 @@ type ChatProps = {
   selectedChat: Chat;
 };
 
+const USER_TEXT_COLOR_CLASSES = [
+  "text-sky-300",
+  "text-emerald-300",
+  "text-amber-300",
+  "text-rose-300",
+  "text-violet-300",
+  "text-cyan-300",
+  "text-lime-300",
+];
+
+const getUserTextColorClass = (userId: number) => {
+  const index = Math.abs(userId) % USER_TEXT_COLOR_CLASSES.length;
+
+  return USER_TEXT_COLOR_CLASSES[index];
+};
+
 const ChatList = ({ selectedChat }: ChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -104,36 +120,46 @@ const ChatList = ({ selectedChat }: ChatProps) => {
           ref={messagesContainerRef}
           className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto pr-1"
         >
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={clsx(
-                "flex w-1/2 min-w-0 flex-col rounded p-2",
-                message.userId === user.id
-                  ? "self-end bg-gray-900"
-                  : "self-start bg-gray-600",
-              )}
-            >
-              {message.userId !== user.id && (
-                <p className="self-start text-start font-bold text-blue-500 wrap-anywhere">
-                  {message.user.name}
-                </p>
-              )}
-              <p className="self-start text-start wrap-anywhere">
-                {message.content}
-              </p>
-              <p className="text-sm text-gray-400 self-end">
-                {new Date(message.createdAt).toLocaleTimeString(
-                  navigator.language,
-                  {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  },
+          {messages.map((message) => {
+            const isCurrentUser = message.userId === user.id;
+            const senderTextColorClass = getUserTextColorClass(message.userId);
+
+            return (
+              <div
+                key={message.id}
+                className={clsx(
+                  "flex w-1/2 min-w-0 flex-col rounded p-2",
+                  isCurrentUser
+                    ? "self-end bg-gray-900"
+                    : "self-start bg-gray-600",
                 )}
-              </p>
-            </div>
-          ))}
+              >
+                {!isCurrentUser && selectedChat.type === "GROUP" && (
+                  <p
+                    className={clsx(
+                      "self-start text-start font-bold wrap-anywhere",
+                      senderTextColorClass,
+                    )}
+                  >
+                    {message.user.name}
+                  </p>
+                )}
+                <p className="self-start text-start wrap-anywhere text-gray-100">
+                  {message.content}
+                </p>
+                <p className="text-sm text-gray-400 self-end">
+                  {new Date(message.createdAt).toLocaleTimeString(
+                    navigator.language,
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    },
+                  )}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className="flex gap-2 pb-[env(safe-area-inset-bottom)]">
