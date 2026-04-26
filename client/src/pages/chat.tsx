@@ -28,7 +28,7 @@ const ChatPage = () => {
   }, []);
 
   return (
-    <div className="flex h-dvh w-full min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom)]">
+    <div className="flex h-svh w-full min-h-0 overflow-hidden">
       <aside className="chat-scroll h-full w-1/4 overflow-x-hidden overflow-y-auto p-4">
         <h2>Chats</h2>
         <div className="flex gap-1 flex-col">
