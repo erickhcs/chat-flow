@@ -1,6 +1,8 @@
 export type Chat = {
   id: number;
   name: string;
+  type: "PRIVATE" | "GROUP";
+  users: User[];
 };
 
 export type Message = {
