@@ -32,9 +32,15 @@ It was designed to demonstrate practical product engineering skills recruiters c
 - 🛡️ Protected routes in the frontend and protected API endpoints in the backend
 - ✅ Client-side form validation with Zod + react-hook-form (login and sign-up)
 - 🧭 Chat room listing and room selection UI
+- ➕ Create group chats from the chat header
+- 🔎 Search users and groups with debounced server-side query
+- 🤝 Join existing groups from search results
+- 👥 Start private 1:1 chats (reuses existing private room when available)
 - 🕘 Message history loading per room
 - ⚡ Live message delivery over WebSocket
 - 🔄 Auto-reconnect behavior in the WebSocket client
+- 🔐 Room payloads return safe user data only (no password)
+- 📱 Mobile-friendly chat layout (safe-area aware input spacing, wrapped long words, no horizontal overflow)
 
 ## 🏗️ Architecture
 
@@ -44,16 +50,21 @@ It was designed to demonstrate practical product engineering skills recruiters c
 - Routing with React Router
 - Context-based auth state handling
 - Tailwind CSS + component primitives
+- Drawer/Dialog/Tabs based auth and chat actions UI
+- Debounced search + optimistic chat list updates when creating/joining chats
 
 ### Backend ⚙️
 
 - Express REST API for auth, rooms, and message history
 - WebSocket server for live chat events
 - Prisma ORM with PostgreSQL adapter
+- Private room reuse logic (prevents duplicate 1:1 rooms)
+- Normalized room responses with flattened users arrays
 
 ### Data Layer 🧠
 
 - Users, Rooms, Messages, and RoomUser join table
+- Room type enum for GROUP vs PRIVATE conversations
 - One-to-many: User -> Message
 - One-to-many: Room -> Message
 - Many-to-many: User <-> Room via RoomUser
@@ -131,6 +142,8 @@ Frontend default URL: http://localhost:5173
 - GET /rooms (auth required)
 - POST /rooms (auth required)
 - POST /rooms/:roomId/join (auth required)
+- POST /rooms/private/:targetUserId (auth required)
+- GET /rooms/search?searchQuery=... (auth required)
 
 ### Messages
 
@@ -157,11 +170,16 @@ Authorization: Bearer YOUR_JWT_TOKEN
 ## 📝 Notes
 
 - Auth UI includes tabbed Login and Sign Up flows.
+- Chat header includes create chat, search chat/user, and logout actions.
+- Room endpoints normalize `users` as a flat array of safe user objects.
 - Real-time chat delivery is implemented with ws events and persisted through Prisma.
 
 ## 🛣️ Roadmap
 
 - ✅ Signup page in frontend
+- ✅ Group chat creation flow
+- ✅ Private chat creation/reuse flow
+- ✅ Search users/groups + join group flow
 - ✅ Message delivery/read status
 - 🟢 Presence indicators (online/typing)
 - 🧪 Unit and integration tests
