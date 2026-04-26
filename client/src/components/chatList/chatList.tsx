@@ -102,24 +102,26 @@ const ChatList = ({ selectedChat }: ChatProps) => {
         <div
           id="chat-messages"
           ref={messagesContainerRef}
-          className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1"
+          className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto pr-1"
         >
           {messages.map((message) => (
             <div
               key={message.id}
               className={clsx(
-                "p-2 rounded w-1/2 flex flex-col",
+                "flex w-1/2 min-w-0 flex-col rounded p-2",
                 message.userId === user.id
                   ? "self-end bg-gray-900"
                   : "self-start bg-gray-600",
               )}
             >
               {message.userId !== user.id && (
-                <p className="font-bold self-start text-start text-blue-500">
+                <p className="self-start text-start font-bold text-blue-500 wrap-anywhere">
                   {message.user.name}
                 </p>
               )}
-              <p className="self-start text-start">{message.content}</p>
+              <p className="self-start text-start wrap-anywhere">
+                {message.content}
+              </p>
               <p className="text-sm text-gray-400 self-end">
                 {new Date(message.createdAt).toLocaleTimeString(
                   navigator.language,

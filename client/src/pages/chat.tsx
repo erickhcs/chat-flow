@@ -29,7 +29,7 @@ const ChatPage = () => {
 
   return (
     <div className="flex h-dvh w-full min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom)]">
-      <aside className="chat-scroll h-full w-1/4 overflow-y-auto p-4">
+      <aside className="chat-scroll h-full w-1/4 overflow-x-hidden overflow-y-auto p-4">
         <h2>Chats</h2>
         <div className="flex gap-1 flex-col">
           {chats.map((chat) => (
@@ -47,7 +47,7 @@ const ChatPage = () => {
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
 
-              <p>{chat.name}</p>
+              <p className="wrap-anywhere">{chat.name}</p>
             </div>
           ))}
         </div>
