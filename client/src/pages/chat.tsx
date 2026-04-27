@@ -56,12 +56,8 @@ const ChatPage = () => {
                   )}
                 >
                   <Avatar>
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@shadcn"
-                      className="grayscale"
-                    />
-                    <AvatarFallback>CN</AvatarFallback>
+                    <AvatarImage src={chat.imageUrl} alt={chat.name} />
+                    <AvatarFallback>{`${chat.name.split(" ")[0].toUpperCase().charAt(0)}${chat.name.split(" ")[1].toUpperCase().charAt(0)}`}</AvatarFallback>
                   </Avatar>
 
                   <p className="wrap-anywhere">{chat.name}</p>

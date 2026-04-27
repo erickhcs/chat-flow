@@ -5,10 +5,14 @@ import { authMiddleware } from "../middlewares/auth";
 const router = express.Router();
 
 router.post("/", authMiddleware, async (req, res) => {
-  const { name } = req.body;
+  const { name, imageUrl } = req.body;
 
   const room = await prisma.room.create({
-    data: { name, users: { create: { userId: req.userId! } } },
+    data: {
+      name,
+      imageUrl,
+      users: { create: { userId: req.userId!, role: "ADMIN" } },
+    },
   });
 
   res.json(room);
@@ -87,6 +91,7 @@ router.post("/private/:targetUserId", authMiddleware, async (req, res) => {
               email: true,
             },
           },
+          role: true,
         },
       },
     },
@@ -95,7 +100,10 @@ router.post("/private/:targetUserId", authMiddleware, async (req, res) => {
   if (existingRoom) {
     const normalizedExistingRoom = {
       ...existingRoom,
-      users: existingRoom.users.map((roomUser) => roomUser.user),
+      users: existingRoom.users.map((roomUser) => ({
+        ...roomUser.user,
+        role: roomUser.role,
+      })),
       name: existingRoom.users.find(
         (roomUser) => roomUser.user.id !== req.userId,
       )?.user.name,
@@ -127,6 +135,7 @@ router.post("/private/:targetUserId", authMiddleware, async (req, res) => {
               email: true,
             },
           },
+          role: true,
         },
       },
     },
@@ -134,7 +143,10 @@ router.post("/private/:targetUserId", authMiddleware, async (req, res) => {
 
   const normalizedRoom = {
     ...room,
-    users: room.users.map((roomUser) => roomUser.user),
+    users: room.users.map((roomUser) => ({
+      ...roomUser.user,
+      role: roomUser.role,
+    })),
     name: room.users.find((roomUser) => roomUser.user.id !== req.userId)?.user
       .name,
   };
@@ -161,6 +173,7 @@ router.get("/", authMiddleware, async (req, res) => {
               email: true,
             },
           },
+          role: true,
         },
       },
     },
@@ -168,7 +181,10 @@ router.get("/", authMiddleware, async (req, res) => {
 
   const normalizedRooms = rooms.map((room) => ({
     ...room,
-    users: room.users.map((roomUser) => roomUser.user),
+    users: room.users.map((roomUser) => ({
+      ...roomUser.user,
+      role: roomUser.role,
+    })),
     name:
       room.type === "PRIVATE"
         ? room.users.find((roomUser) => roomUser.user.id !== req.userId)?.user
@@ -217,10 +233,6 @@ router.get("/search", authMiddleware, async (req, res) => {
         },
         type: "GROUP",
       },
-      select: {
-        id: true,
-        name: true,
-      },
     });
 
     res.json({ users, groups });
@@ -231,6 +243,22 @@ router.get("/search", authMiddleware, async (req, res) => {
       errorDetails: (error as Error).message,
     });
   }
+});
+
+router.patch("/:roomId", authMiddleware, async (req, res) => {
+  const { roomId } = req.params;
+  const { name, imageUrl } = req.body;
+
+  if (typeof name !== "string" || name.trim() === "") {
+    return res.status(400).json({ error: "Room name is required" });
+  }
+
+  const room = await prisma.room.update({
+    where: { id: Number(roomId) },
+    data: { name, imageUrl },
+  });
+
+  res.json(room);
 });
 
 export default router;

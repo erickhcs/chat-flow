@@ -17,9 +17,19 @@ import { Label } from "@/components/ui/label";
 import useFetch from "@/hooks/useFetch";
 import type { Chat } from "@/types";
 import { Input } from "@/components/ui/input";
+import uploadImage from "@/lib/uploadImage";
 
 const createChatSchema = z.object({
   name: z.string().min(5, "Chat name must be at least 5 characters"),
+  cover: z
+    .any()
+    .refine((files) => files?.length === 1, "Image is required")
+    .transform((files) => files?.[0])
+    .refine((file) => file.size <= 2 * 1024 * 1024, "Max 2MB")
+    .refine(
+      (file) => ["image/png", "image/jpeg", "image/webp"].includes(file.type),
+      "Invalid image type",
+    ),
 });
 
 type CreateChatFormData = z.infer<typeof createChatSchema>;
@@ -39,7 +49,7 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
     formState: { errors, isSubmitting },
   } = useForm<CreateChatFormData>({
     resolver: zodResolver(createChatSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", cover: undefined },
   });
 
   const handleClickCreateChatButton = () => {
@@ -48,6 +58,8 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
 
   const handleCreateChat = async (data: CreateChatFormData) => {
     try {
+      const imageUrl = await uploadImage(data.cover, "rooms/");
+
       const response = await fetchApiWithAuth(
         `${import.meta.env.VITE_API_URL}/rooms`,
         {
@@ -55,7 +67,7 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ ...data, imageUrl }),
         },
       );
 
@@ -97,7 +109,7 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
               </DrawerDescription>
             </DrawerHeader>
             <div className="px-4">
-              <Label htmlFor="email">Chat name</Label>
+              <Label htmlFor="name">Chat name</Label>
               <Input
                 disabled={isSubmitting}
                 {...register("name")}
@@ -109,6 +121,26 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
               {errors.name && (
                 <p className="text-red-500 text-sm pt-2">
                   {errors.name.message}
+                </p>
+              )}
+
+              <Label htmlFor="cover" className="mt-7">
+                Cover image
+              </Label>
+              <Input
+                id="cover"
+                type="file"
+                accept="image/*"
+                disabled={isSubmitting}
+                {...register("cover")}
+                className="mt-4"
+                placeholder="Cover image"
+              />
+              {errors.cover && (
+                <p className="text-red-500 text-sm pt-2">
+                  {typeof errors.cover.message === "string"
+                    ? errors.cover.message
+                    : "Invalid cover image"}
                 </p>
               )}
             </div>

@@ -17,6 +17,11 @@ enum RoomType {
   GROUP
 }
 
+enum RoomRole {
+  MEMBER
+  ADMIN
+}
+
 model User {
   id       Int       @id @default(autoincrement())
   name     String
@@ -32,6 +37,7 @@ model Room {
   messages Message[]
   users    RoomUser[]
   type     RoomType  @default(GROUP)
+  imageUrl String?
 }
 
 model Message {
@@ -51,6 +57,7 @@ model RoomUser {
 
   room Room @relation(fields: [roomId], references: [id])
   user User @relation(fields: [userId], references: [id])
+  role RoomRole @default(MEMBER)
 
   @@id([roomId, userId])
 }

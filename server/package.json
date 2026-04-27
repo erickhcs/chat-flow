@@ -3,7 +3,9 @@
   "license": "MIT",
   "scripts": {
     "build": "prisma generate && tsc",
-    "start": "tsx index.ts"
+    "start": "tsx index.ts",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.7.0",

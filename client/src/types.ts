@@ -1,8 +1,13 @@
+type ChatUser = User & {
+  role: "ADMIN" | "MEMBER";
+};
+
 export type Chat = {
   id: number;
   name: string;
   type: "PRIVATE" | "GROUP";
-  users: User[];
+  users: ChatUser[];
+  imageUrl?: string;
 };
 
 export type Message = {
