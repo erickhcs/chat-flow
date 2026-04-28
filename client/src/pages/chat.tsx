@@ -1,5 +1,4 @@
 import { ChatList } from "@/components/chatList";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import useFetch from "@/hooks/useFetch";
 import type { Chat } from "@/types";
 import { useEffect, useState } from "react";
@@ -7,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ActionsHeader } from "@/components/actionsHeader";
 import clsx from "clsx";
 import { Spinner } from "@/components/ui/spinner";
+import CustomAvatar from "@/components/customAvatar/customAvatar";
 
 const ChatPage = () => {
   const [chats, setChats] = useState<Chat[]>([]);
@@ -30,6 +30,13 @@ const ChatPage = () => {
     }
   };
 
+  const handleEditChat = (editedChat: Chat) => {
+    setChats((prevChats) =>
+      prevChats.map((chat) => (chat.id === editedChat.id ? editedChat : chat)),
+    );
+    setSelectedChat(editedChat);
+  };
+
   useEffect(() => {
     fetchChats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,7 +55,7 @@ const ChatPage = () => {
       <div className="flex flex-col overflow-y-auto">
         <ActionsHeader onAddChat={onAddChat} />
         <div className="flex h-svh w-full min-h-0 overflow-hidden">
-          <aside className="chat-scroll h-full w-1/4 overflow-x-hidden overflow-y-auto p-4">
+          <aside className="chat-scroll h-full w-1/4 overflow-x-hidden overflow-y-auto p-4 border-r-2">
             <h2>Chats</h2>
             <div className="flex gap-1 flex-col">
               {isLoadingChats ? (
@@ -65,23 +72,22 @@ const ChatPage = () => {
                       selectedChat?.id === chat.id && "bg-gray-600",
                     )}
                   >
-                    <Avatar>
-                      <AvatarImage src={chat.imageUrl} alt={chat.name} />
-                      <AvatarFallback>{`${chat.name.split(" ")[0].toUpperCase().charAt(0)}${chat.name.split(" ")[1].toUpperCase().charAt(0)}`}</AvatarFallback>
-                    </Avatar>
+                    <CustomAvatar name={chat.name} imageUrl={chat.imageUrl} />
 
-                    <p className="wrap-anywhere">{chat.name}</p>
+                    <p className="wrap-anywhere text-start">{chat.name}</p>
                   </div>
                 ))
               )}
             </div>
           </aside>
-          <hr className="h-full w-px bg-white" />
-          <div className="h-full w-3/4 min-h-0 p-4">
+          <div className="h-full w-3/4 min-h-0 pb-4">
             {selectedChat ? (
-              <ChatList selectedChat={selectedChat} />
+              <ChatList
+                onEditChat={handleEditChat}
+                selectedChat={selectedChat}
+              />
             ) : (
-              <h2>Chat Window</h2>
+              <h2 className="pt-4">Chat Window</h2>
             )}
           </div>
         </div>

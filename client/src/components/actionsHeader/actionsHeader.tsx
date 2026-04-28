@@ -13,7 +13,7 @@ const ActionsHeader = ({ onAddChat }: ActionsHeaderProps) => {
   const { user } = useUserContext();
 
   return (
-    <div className="bg-gray-600 p-3 flex justify-between">
+    <div className="bg-gray-900 p-4 flex justify-between border-b-2">
       <div className="flex items-center gap-5">
         <p>{user?.name}</p>
 

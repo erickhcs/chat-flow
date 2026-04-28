@@ -7,9 +7,11 @@ import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { webSocketClient } from "@/websocket";
 import useFetch from "@/hooks/useFetch";
+import { ChatHeader } from "@/components/chatHeader";
 
 type ChatProps = {
   selectedChat: Chat;
+  onEditChat: (chat: Chat) => void;
 };
 
 const USER_TEXT_COLOR_CLASSES = [
@@ -28,7 +30,7 @@ const getUserTextColorClass = (userId: number) => {
   return USER_TEXT_COLOR_CLASSES[index];
 };
 
-const ChatList = ({ selectedChat }: ChatProps) => {
+const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -101,8 +103,8 @@ const ChatList = ({ selectedChat }: ChatProps) => {
   if (isLoading) {
     return (
       <>
-        <p>{selectedChat.name}</p>
-        <div className="flex w-full max-w-xs flex-col gap-2 mt-2">
+        <ChatHeader onEditChat={onEditChat} selectedChat={selectedChat} />
+        <div className="flex w-full max-w-xs flex-col gap-2 mt-2 p-4">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
@@ -112,13 +114,13 @@ const ChatList = ({ selectedChat }: ChatProps) => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col justify-between gap-4">
+    <div className="flex h-full min-h-0 flex-col justify-between">
       <div className="flex min-h-0 flex-1 flex-col">
-        <p>{selectedChat.name}</p>
+        <ChatHeader onEditChat={onEditChat} selectedChat={selectedChat} />
         <div
           id="chat-messages"
           ref={messagesContainerRef}
-          className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto pr-1"
+          className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4"
         >
           {messages.map((message) => {
             const isCurrentUser = message.userId === user.id;
@@ -162,7 +164,7 @@ const ChatList = ({ selectedChat }: ChatProps) => {
           })}
         </div>
       </div>
-      <div className="flex gap-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex gap-2 pb-[env(safe-area-inset-bottom)] px-4">
         <Input
           value={newMessage}
           onKeyUp={(e) => {
