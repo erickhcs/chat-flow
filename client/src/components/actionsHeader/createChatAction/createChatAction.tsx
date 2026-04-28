@@ -1,4 +1,4 @@
-import { MessageCirclePlus } from "lucide-react";
+import { MessageCirclePlus, Trash, Upload } from "lucide-react";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,18 +18,20 @@ import useFetch from "@/hooks/useFetch";
 import type { Chat } from "@/types";
 import { Input } from "@/components/ui/input";
 import uploadImage from "@/lib/uploadImage";
+import { useDropzone } from "react-dropzone";
+import { Card } from "@/components/ui/card";
+import clsx from "clsx";
 
 const createChatSchema = z.object({
   name: z.string().min(5, "Chat name must be at least 5 characters"),
   cover: z
-    .any()
-    .refine((files) => files?.length === 1, "Image is required")
-    .transform((files) => files?.[0])
-    .refine((file) => file.size <= 2 * 1024 * 1024, "Max 2MB")
-    .refine(
-      (file) => ["image/png", "image/jpeg", "image/webp"].includes(file.type),
-      "Invalid image type",
-    ),
+    .optional(z.instanceof(File))
+    .refine((file) => !file || file.type.startsWith("image/"), {
+      message: "Only image files are allowed",
+    })
+    .refine((file) => !file || file.size <= 5 * 1024 * 1024, {
+      message: "Max file size is 5MB",
+    }),
 });
 
 type CreateChatFormData = z.infer<typeof createChatSchema>;
@@ -40,16 +42,35 @@ interface CreateChatActionProps {
 
 const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
   const { fetchApiWithAuth } = useFetch();
+  const [preview, setPreview] = useState<string>();
   const [isOpenCreateChatDrawer, setIsOpenCreateChatDrawer] = useState(false);
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<CreateChatFormData>({
     resolver: zodResolver(createChatSchema),
     defaultValues: { name: "", cover: undefined },
+  });
+
+  const onDrop = (files: File[]) => {
+    if (files[0]) {
+      setValue("cover", files[0], { shouldValidate: true });
+
+      if (preview) URL.revokeObjectURL(preview);
+      setPreview(URL.createObjectURL(files[0]));
+    }
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: {
+      "image/*": [],
+    },
+    onDrop,
+    multiple: false,
   });
 
   const handleClickCreateChatButton = () => {
@@ -58,7 +79,9 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
 
   const handleCreateChat = async (data: CreateChatFormData) => {
     try {
-      const imageUrl = await uploadImage(data.cover, "rooms/");
+      const imageUrl = data.cover
+        ? await uploadImage(data.cover, "rooms/")
+        : undefined;
 
       const response = await fetchApiWithAuth(
         `${import.meta.env.VITE_API_URL}/rooms`,
@@ -84,6 +107,11 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
     }
   };
 
+  const handleRemoveCover = () => {
+    setPreview(undefined);
+    setValue("cover", undefined, { shouldValidate: true });
+  };
+
   return (
     <>
       <Button
@@ -99,6 +127,7 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
         direction="left"
         open={isOpenCreateChatDrawer}
         onOpenChange={setIsOpenCreateChatDrawer}
+        onClose={() => setPreview(undefined)}
       >
         <DrawerContent>
           <form onSubmit={handleSubmit(handleCreateChat)}>
@@ -124,18 +153,36 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
                 </p>
               )}
 
-              <Label htmlFor="cover" className="mt-7">
-                Cover image
-              </Label>
-              <Input
-                id="cover"
-                type="file"
-                accept="image/*"
-                disabled={isSubmitting}
-                {...register("cover")}
-                className="mt-4"
-                placeholder="Cover image"
-              />
+              <Card
+                className={clsx(
+                  "flex w-full aspect-square justify-center mt-4 relative",
+                  !preview && "cursor-pointer",
+                )}
+              >
+                {preview ? (
+                  <>
+                    <img src={preview} alt="Preview" className="object-cover" />
+                    <Button
+                      onClick={handleRemoveCover}
+                      variant="outline"
+                      size="icon"
+                      className="cursor-pointer absolute top-2 right-2 text-gray-900 border-gray-900! bg-gray-300! hover:bg-gray-400! hover:text-gray-900"
+                    >
+                      <Trash />
+                    </Button>
+                  </>
+                ) : (
+                  <div
+                    {...getRootProps()}
+                    className="flex flex-col justify-center items-center w-full h-full"
+                  >
+                    <input {...getInputProps()} />
+                    <Upload />
+                    <p className="text-center">Drag image here or click</p>
+                  </div>
+                )}
+              </Card>
+
               {errors.cover && (
                 <p className="text-red-500 text-sm pt-2">
                   {typeof errors.cover.message === "string"
