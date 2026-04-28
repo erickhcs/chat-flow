@@ -29,6 +29,7 @@ model User {
   messages Message[]
   rooms    RoomUser[]
   password String
+  imageUrl String?
 }
 
 model Room {
