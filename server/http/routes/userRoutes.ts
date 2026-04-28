@@ -6,13 +6,6 @@ import "dotenv/config";
 
 const router = express.Router();
 
-// TODO: remove this route, it's only for testing purposes
-router.get("/", async (req, res) => {
-  const users = await prisma.user.findMany();
-
-  res.json(users);
-});
-
 router.post("/signup", async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -57,6 +50,23 @@ router.post("/login", async (req, res) => {
     token,
     user: { id: user.id, name: user.name, email: user.email },
   });
+});
+
+router.patch("/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  if (Number(userId) !== req.userId) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+
+  const { name, imageUrl } = req.body;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: Number(userId) },
+    data: { name, imageUrl },
+  });
+
+  res.json({ name: updatedUser.name, imageUrl: updatedUser.imageUrl });
 });
 
 export default router;

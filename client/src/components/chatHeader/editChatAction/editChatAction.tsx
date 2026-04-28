@@ -57,7 +57,7 @@ const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
     defaultValues: {
       name: selectedChat.name,
       preview: selectedChat.imageUrl,
-      cover: Object.assign(new File([], ""), selectedChat.imageUrl),
+      cover: undefined,
     },
   });
   const { name, preview } = useWatch({ control });

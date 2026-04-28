@@ -20,6 +20,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import useFetch from "@/hooks/useFetch";
+import { CustomAvatar } from "@/components/customAvatar";
 
 type SearchResult = {
   users: User[];
@@ -189,6 +190,8 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
                     onClick={() => handleClickSearchedGroup(group)}
                     className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 text-white text-start font-light justify-start"
                   >
+                    <CustomAvatar name={group.name} imageUrl={group.imageUrl} />
+
                     {group.name}
                   </Button>
                 ))}
@@ -207,6 +210,7 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
                     onClick={() => handleClickSearchedUser(user)}
                     className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 text-white text-start font-light justify-start"
                   >
+                    <CustomAvatar name={user.name} imageUrl={user.imageUrl} />
                     {user.name}
                     {selectedSearchedUser?.id === user.id &&
                       isOpeningPrivateChat && (

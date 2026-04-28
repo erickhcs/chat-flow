@@ -16,14 +16,12 @@ export type Message = {
   userId: number;
   roomId: number;
   createdAt: string;
-  user: {
-    id: number;
-    name: string;
-  };
+  user: User;
 };
 
 export type User = {
   id: number;
   name: string;
   email: string;
+  imageUrl?: string;
 };

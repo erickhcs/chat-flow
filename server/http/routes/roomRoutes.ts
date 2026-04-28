@@ -256,9 +256,31 @@ router.patch("/:roomId", authMiddleware, async (req, res) => {
   const room = await prisma.room.update({
     where: { id: Number(roomId) },
     data: { name, imageUrl },
+    include: {
+      users: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          role: true,
+        },
+      },
+    },
   });
 
-  res.json(room);
+  const normalizedUpdatedRoom = {
+    ...room,
+    users: room.users.map((roomUser) => ({
+      ...roomUser.user,
+      role: roomUser.role,
+    })),
+  };
+
+  res.json(normalizedUpdatedRoom);
 });
 
 export default router;

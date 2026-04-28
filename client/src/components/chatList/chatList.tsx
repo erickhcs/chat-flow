@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { webSocketClient } from "@/websocket";
 import useFetch from "@/hooks/useFetch";
 import { ChatHeader } from "@/components/chatHeader";
+import { CustomAvatar } from "../customAvatar";
 
 type ChatProps = {
   selectedChat: Chat;
@@ -143,6 +144,11 @@ const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
                       senderTextColorClass,
                     )}
                   >
+                    <CustomAvatar
+                      name={message.user.name}
+                      imageUrl={message.user.imageUrl}
+                    />
+
                     {message.user.name}
                   </p>
                 )}

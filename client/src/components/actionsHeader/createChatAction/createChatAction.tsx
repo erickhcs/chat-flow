@@ -1,6 +1,6 @@
 import { MessageCirclePlus, Trash, Upload } from "lucide-react";
 import z from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -24,6 +24,7 @@ import clsx from "clsx";
 
 const createChatSchema = z.object({
   name: z.string().min(5, "Chat name must be at least 5 characters"),
+  preview: z.string().optional(),
   cover: z
     .optional(z.instanceof(File))
     .refine((file) => !file || file.type.startsWith("image/"), {
@@ -42,26 +43,27 @@ interface CreateChatActionProps {
 
 const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
   const { fetchApiWithAuth } = useFetch();
-  const [preview, setPreview] = useState<string>();
   const [isOpenCreateChatDrawer, setIsOpenCreateChatDrawer] = useState(false);
   const {
     register,
     handleSubmit,
     reset,
+    control,
     setValue,
     clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<CreateChatFormData>({
     resolver: zodResolver(createChatSchema),
-    defaultValues: { name: "", cover: undefined },
+    defaultValues: { name: "", preview: undefined, cover: undefined },
   });
+  const { preview } = useWatch({ control });
 
   const onDrop = (files: File[]) => {
     if (files[0]) {
       setValue("cover", files[0], { shouldValidate: true });
 
       if (preview) URL.revokeObjectURL(preview);
-      setPreview(URL.createObjectURL(files[0]));
+      setValue("preview", URL.createObjectURL(files[0]));
     }
   };
 
@@ -108,7 +110,7 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
   };
 
   const handleRemoveCover = () => {
-    setPreview(undefined);
+    setValue("preview", undefined, { shouldValidate: true });
     setValue("cover", undefined, { shouldValidate: true });
   };
 
@@ -127,7 +129,7 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
         direction="left"
         open={isOpenCreateChatDrawer}
         onOpenChange={setIsOpenCreateChatDrawer}
-        onClose={() => setPreview(undefined)}
+        onClose={() => reset()}
       >
         <DrawerContent>
           <form onSubmit={handleSubmit(handleCreateChat)}>
