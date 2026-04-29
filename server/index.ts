@@ -7,11 +7,15 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import MessageHandler from "./websocket/messageHandler";
 import { AuthedWebSocket } from "./websocket/types";
+import { sub } from "./redis/subscriber";
 import "dotenv/config";
+import RoomManager from "./websocket/roomsManager";
+import ConnectionsManager from "./websocket/connectionsManager";
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
+await sub.subscribe("chat_messages");
 
 app.use(cors());
 app.use(express.json());
@@ -43,4 +47,24 @@ wss.on("connection", async (ws: AuthedWebSocket) => {
 
 wss.on("close", (code: number, reason: Buffer) => {
   console.log("Websocket server closed: ", code, reason.toString());
+});
+
+sub.on("message", (channel, payload) => {
+  const event = JSON.parse(payload);
+  if (channel === "chat_messages") {
+    const usersInRoom = RoomManager.getUsersInRoom(event.roomId);
+
+    usersInRoom.forEach((userId) => {
+      const client = ConnectionsManager.getClient(userId);
+      if (client?.readyState === WebSocket.OPEN) {
+        client.send(
+          JSON.stringify({
+            type: "message",
+            content: event.message,
+            roomId: event.roomId,
+          }),
+        );
+      }
+    });
+  }
 });

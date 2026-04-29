@@ -1,4 +1,5 @@
 import { prisma } from "../database/prisma";
+import { pub } from "../redis/publisher";
 
 type Message = {
   content: string;
@@ -7,12 +8,12 @@ type Message = {
 };
 
 class MessageService {
-  static createMessage({ content, userId, roomId }: Message) {
+  static async createMessage({ content, userId, roomId }: Message) {
     if (!content || isNaN(userId) || isNaN(roomId)) {
       throw new Error("Missing required fields to create a message.");
     }
 
-    const message = prisma.message.create({
+    const message = await prisma.message.create({
       data: {
         content,
         room: { connect: { id: roomId } },
@@ -27,6 +28,15 @@ class MessageService {
         },
       },
     });
+
+    await pub.publish(
+      "chat_messages",
+      JSON.stringify({
+        type: "message_created",
+        roomId,
+        message,
+      }),
+    );
 
     return message;
   }

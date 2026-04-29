@@ -46,24 +46,10 @@ class MessageHandler {
 
       case "message":
         try {
-          const usersInRoom = RoomManager.getUsersInRoom(message.roomId);
-          const createdMessage = await MessageService.createMessage({
+          await MessageService.createMessage({
             userId: ws.user.id,
             roomId: message.roomId,
             content: message.content as string,
-          });
-
-          usersInRoom.forEach((userId) => {
-            const client = ConnectionsManager.getClient(userId);
-            if (client?.readyState === WebSocket.OPEN) {
-              client.send(
-                JSON.stringify({
-                  type: "message",
-                  content: createdMessage,
-                  roomId: message.roomId,
-                }),
-              );
-            }
           });
         } catch (error) {
           console.log("Error handling message: ", error);
