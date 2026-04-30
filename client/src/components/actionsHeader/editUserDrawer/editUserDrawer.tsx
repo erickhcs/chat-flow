@@ -102,7 +102,7 @@ const EditUserDrawer = ({ open, onOpenChange }: EditUserDrawerProps) => {
       const imageUrl = await getImageUrl(data.cover);
 
       const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/rooms/${(user as User).id}`,
+        `${import.meta.env.VITE_API_URL}/users/${(user as User).id}`,
         {
           method: "PATCH",
           headers: {

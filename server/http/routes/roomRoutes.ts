@@ -171,6 +171,7 @@ router.get("/", authMiddleware, async (req, res) => {
               id: true,
               name: true,
               email: true,
+              imageUrl: true,
             },
           },
           role: true,
@@ -185,6 +186,11 @@ router.get("/", authMiddleware, async (req, res) => {
       ...roomUser.user,
       role: roomUser.role,
     })),
+    imageUrl:
+      room.type === "PRIVATE"
+        ? room.users.find((roomUser) => roomUser.user.id !== req.userId)?.user
+            .imageUrl
+        : room.imageUrl,
     name:
       room.type === "PRIVATE"
         ? room.users.find((roomUser) => roomUser.user.id !== req.userId)?.user

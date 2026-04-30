@@ -16,6 +16,7 @@ router.get("/:roomId", authMiddleware, async (req, res) => {
         select: {
           id: true,
           name: true,
+          imageUrl: true,
         },
       },
     },

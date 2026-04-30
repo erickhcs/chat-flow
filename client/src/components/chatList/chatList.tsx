@@ -131,30 +131,38 @@ const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
               <div
                 key={message.id}
                 className={clsx(
-                  "flex w-1/2 min-w-0 flex-col rounded p-2",
+                  "flex justify-between w-3/4 md:w-1/2 min-w-0 rounded p-2",
                   isCurrentUser
                     ? "self-end bg-gray-900"
                     : "self-start bg-gray-600",
                 )}
               >
-                {!isCurrentUser && selectedChat.type === "GROUP" && (
-                  <p
-                    className={clsx(
-                      "self-start text-start font-bold wrap-anywhere",
-                      senderTextColorClass,
-                    )}
-                  >
-                    <CustomAvatar
-                      name={message.user.name}
-                      imageUrl={message.user.imageUrl}
-                    />
+                <div className="flex gap-2">
+                  {!isCurrentUser && selectedChat.type === "GROUP" && (
+                    <>
+                      <CustomAvatar
+                        name={message.user.name}
+                        imageUrl={message.user.imageUrl}
+                      />
+                    </>
+                  )}
 
-                    {message.user.name}
-                  </p>
-                )}
-                <p className="self-start text-start wrap-anywhere text-gray-100">
-                  {message.content}
-                </p>
+                  <div className="flex flex-col">
+                    {!isCurrentUser && selectedChat.type === "GROUP" && (
+                      <p
+                        className={clsx(
+                          "flex gap-2 mb-2 items-center self-start text-start font-bold wrap-anywhere",
+                          senderTextColorClass,
+                        )}
+                      >
+                        {message.user.name}
+                      </p>
+                    )}
+                    <p className="self-start text-start wrap-anywhere text-gray-100">
+                      {message.content}
+                    </p>
+                  </div>
+                </div>
                 <p className="text-sm text-gray-400 self-end">
                   {new Date(message.createdAt).toLocaleTimeString(
                     navigator.language,

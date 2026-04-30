@@ -2,6 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { prisma } from "../../database/prisma.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import "dotenv/config";
 
 const router = express.Router();
@@ -48,11 +49,16 @@ router.post("/login", async (req, res) => {
 
   res.json({
     token,
-    user: { id: user.id, name: user.name, email: user.email },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      imageUrl: user.imageUrl,
+    },
   });
 });
 
-router.patch("/:userId", async (req, res) => {
+router.patch("/:userId", authMiddleware, async (req, res) => {
   const { userId } = req.params;
 
   if (Number(userId) !== req.userId) {
@@ -66,7 +72,12 @@ router.patch("/:userId", async (req, res) => {
     data: { name, imageUrl },
   });
 
-  res.json({ name: updatedUser.name, imageUrl: updatedUser.imageUrl });
+  res.json({
+    id: updatedUser.id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+    imageUrl: updatedUser.imageUrl,
+  });
 });
 
 export default router;

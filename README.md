@@ -31,13 +31,15 @@ It was designed to demonstrate practical product engineering skills recruiters c
 - 🆕 Sign-up flow in frontend with automatic authentication after account creation
 - 🛡️ Protected routes in the frontend and protected API endpoints in the backend
 - ✅ Client-side form validation with Zod + react-hook-form (login and sign-up)
+- 👤 User profile editing with custom avatar images (stored in Supabase)
+- 🖼️ Room/group images with customizable covers
 - 🧭 Chat room listing and room selection UI
 - ➕ Create group chats from the chat header
 - 🔎 Search users and groups with debounced server-side query
 - 🤝 Join existing groups from search results
 - 👥 Start private 1:1 chats (reuses existing private room when available)
 - 🕘 Message history loading per room
-- ⚡ Live message delivery over WebSocket
+- ⚡ Live message delivery over WebSocket with Redis pub/sub
 - 🔄 Auto-reconnect behavior in the WebSocket client
 - 🔐 Room payloads return safe user data only (no password)
 - 📱 Mobile-friendly chat layout (safe-area aware input spacing, wrapped long words, no horizontal overflow)
@@ -56,10 +58,13 @@ It was designed to demonstrate practical product engineering skills recruiters c
 ### Backend ⚙️
 
 - Express REST API for auth, rooms, and message history
-- WebSocket server for live chat events
+- WebSocket server for live chat events with JWT verification
+- Redis pub/sub for scalable real-time message broadcasting
 - Prisma ORM with PostgreSQL adapter
 - Private room reuse logic (prevents duplicate 1:1 rooms)
 - Normalized room responses with flattened users arrays
+- Connections manager for efficient WebSocket client tracking
+- Rooms manager for organizing users by room subscriptions
 
 ### Data Layer 🧠
 
@@ -72,9 +77,10 @@ It was designed to demonstrate practical product engineering skills recruiters c
 ## 🧰 Tech Stack
 
 - 🎨 Frontend: React 19, Vite 8, TypeScript 6, Tailwind CSS, Radix-based UI components, react-hook-form, Zod, @hookform/resolvers
-- ⚙️ Backend: Node.js, Express 5, ws, TypeScript 6
+- ⚙️ Backend: Node.js, Express 5, ws, TypeScript 6, Redis
 - 🔐 Auth: JSON Web Tokens + bcrypt
 - 🗄️ Database: PostgreSQL + Prisma
+- ☁️ File Storage: Supabase Storage for user and room images
 
 ## 📁 Project Structure
 
