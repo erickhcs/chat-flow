@@ -104,6 +104,7 @@ const EditUserDrawer = ({ open, onOpenChange }: EditUserDrawerProps) => {
 
       const newUser = await editUser({
         name: data.name,
+        userId: (user as User).id,
         imageUrl: imageUrl || undefined,
       });
 
