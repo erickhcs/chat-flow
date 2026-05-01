@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Chat, Message, User } from "@/types";
+import type { Chat, User } from "@/types";
 import clsx from "clsx";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import useGetMessages from "@/hooks/useGetMessages";
 import { useQueryClient } from "@tanstack/react-query";
 
 type ChatProps = {
-  selectedChat: Chat;
+  selectedChatId: number;
   onLeaveChat: () => void;
   onEditChat: (chat: Chat) => void;
 };
@@ -33,44 +33,21 @@ const getUserTextColorClass = (userId: number) => {
   return USER_TEXT_COLOR_CLASSES[index];
 };
 
-const ChatList = ({ selectedChat, onLeaveChat, onEditChat }: ChatProps) => {
+const ChatList = ({ selectedChatId, onLeaveChat, onEditChat }: ChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const queryClient = useQueryClient();
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const { data: messagesData, isLoading } = useGetMessages(selectedChat.id);
+  const { data: messagesData, isLoading } = useGetMessages(selectedChatId);
   const user: User = JSON.parse(localStorage.getItem("user") || "{}");
-
-  const handleReceiveMessage = useCallback(
-    (message: Message) => {
-      if (message.roomId === selectedChat.id) {
-        queryClient.setQueryData(
-          ["messages", selectedChat.id],
-          (oldMessages: Message[] | undefined) => {
-            if (!oldMessages) return [message];
-
-            return [...oldMessages, message];
-          },
-        );
-      }
-    },
-    [selectedChat.id, queryClient],
-  );
+  const selectedChat: Chat = (
+    queryClient.getQueryData(["rooms"]) as Chat[] | undefined
+  )?.find((chat: Chat) => chat.id === selectedChatId) as Chat;
 
   const handleSendMessage = () => {
-    webSocketClient.sendMessage(newMessage, selectedChat.id);
+    webSocketClient.sendMessage(newMessage, selectedChatId, user.name);
 
     setNewMessage("");
   };
-
-  useEffect(() => {
-    webSocketClient.connect(handleReceiveMessage);
-    webSocketClient.joinRoom(selectedChat.id);
-
-    return () => {
-      webSocketClient.leaveRoom(selectedChat.id);
-      webSocketClient.disconnect();
-    };
-  }, [handleReceiveMessage, selectedChat.id]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -91,7 +68,7 @@ const ChatList = ({ selectedChat, onLeaveChat, onEditChat }: ChatProps) => {
         <ChatHeader
           onLeaveChat={onLeaveChat}
           onEditChat={onEditChat}
-          selectedChat={selectedChat}
+          selectedChatId={selectedChatId}
         />
         <div className="flex w-full max-w-xs flex-col gap-2 mt-2 p-4">
           <Skeleton className="h-4 w-full" />
@@ -107,7 +84,7 @@ const ChatList = ({ selectedChat, onLeaveChat, onEditChat }: ChatProps) => {
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatHeader
           onEditChat={onEditChat}
-          selectedChat={selectedChat}
+          selectedChatId={selectedChatId}
           onLeaveChat={onLeaveChat}
         />
         <div

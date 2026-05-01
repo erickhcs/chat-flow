@@ -40,6 +40,9 @@ model Room {
   type     RoomType  @default(GROUP)
   imageUrl String?
   lastMessageAt DateTime? @default(now())
+  lastMessageContent String?
+  lastMessageUserName String?
+  lastMessageUserId Int?
 }
 
 model Message {

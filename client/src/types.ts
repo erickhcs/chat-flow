@@ -8,6 +8,10 @@ export type Chat = {
   type: "PRIVATE" | "GROUP";
   users: ChatUser[];
   imageUrl?: string;
+  lastMessageAt?: Date;
+  lastMessageContent?: string;
+  lastMessageUserName?: string;
+  lastMessageUserId?: number;
 };
 
 export type Message = {

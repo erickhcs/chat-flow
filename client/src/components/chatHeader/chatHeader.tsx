@@ -32,13 +32,13 @@ import { Spinner } from "../ui/spinner";
 import useDeleteRoom from "@/hooks/useDeleteRoom";
 
 type ChatHeaderProps = {
-  selectedChat: Chat;
+  selectedChatId: number;
   onLeaveChat: () => void;
   onEditChat: (chat: Chat) => void;
 };
 
 const ChatHeader = ({
-  selectedChat,
+  selectedChatId,
   onLeaveChat,
   onEditChat,
 }: ChatHeaderProps) => {
@@ -50,6 +50,9 @@ const ChatHeader = ({
   const [isOpenLeaveChatDialog, setIsOpenLeaveChatDialog] = useState(false);
   const { mutateAsync: postLeaveRoom, isPending: isLeavingRoom } =
     usePostLeaveRoom();
+  const selectedChat: Chat = (
+    queryClient.getQueryData(["rooms"]) as Chat[] | undefined
+  )?.find((chat: Chat) => chat.id === selectedChatId) as Chat;
   const canEdit =
     selectedChat.type === "GROUP" &&
     selectedChat.users.find((u) => u.id === user?.id) &&
@@ -61,28 +64,28 @@ const ChatHeader = ({
   };
 
   const handleLeaveGroupOptionClick = async () => {
-    await postLeaveRoom({ roomId: selectedChat.id });
+    await postLeaveRoom({ roomId: selectedChatId });
 
     queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
       if (!oldRooms) return oldRooms;
 
-      return oldRooms.filter((chat) => chat.id !== selectedChat.id);
+      return oldRooms.filter((chat) => chat.id !== selectedChatId);
     });
 
-    webSocketClient.leaveRoom(selectedChat.id);
+    webSocketClient.leaveRoom(selectedChatId);
     onLeaveChat();
   };
 
   const deleteRoomOptionClick = async () => {
-    await deleteRoom({ roomId: selectedChat.id });
+    await deleteRoom({ roomId: selectedChatId });
 
     queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
       if (!oldRooms) return oldRooms;
 
-      return oldRooms.filter((chat) => chat.id !== selectedChat.id);
+      return oldRooms.filter((chat) => chat.id !== selectedChatId);
     });
 
-    webSocketClient.leaveRoom(selectedChat.id);
+    webSocketClient.leaveRoom(selectedChatId);
     onLeaveChat();
   };
 

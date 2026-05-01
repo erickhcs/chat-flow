@@ -4,11 +4,12 @@ import { pub } from "../redis/publisher";
 type Message = {
   content: string;
   userId: number;
+  userName: string;
   roomId: number;
 };
 
 class MessageService {
-  static async createMessage({ content, userId, roomId }: Message) {
+  static async createMessage({ content, userId, userName, roomId }: Message) {
     if (!content || isNaN(userId) || isNaN(roomId)) {
       throw new Error("Missing required fields to create a message.");
     }
@@ -31,7 +32,12 @@ class MessageService {
 
     await prisma.room.update({
       where: { id: roomId },
-      data: { lastMessageAt: new Date() },
+      data: {
+        lastMessageAt: new Date(),
+        lastMessageContent: content,
+        lastMessageUserName: userName,
+        lastMessageUserId: userId,
+      },
     });
 
     await pub.publish(

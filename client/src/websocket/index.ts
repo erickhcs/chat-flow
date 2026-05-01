@@ -118,9 +118,10 @@ class WebSocketClient {
     }
   }
 
-  public sendMessage(content: string, roomId: number) {
+  public sendMessage(content: string, roomId: number, userName: string) {
     const message: WSMessage = {
       type: "message",
+      userName,
       content,
       roomId,
     };

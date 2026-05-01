@@ -3,8 +3,12 @@ import type { Message } from "./client/src/types";
 export type WSMessage =
   | { type: "auth"; token: string }
   | {
-      type: "join_room" | "message" | "leave_room";
+      type: "join_room" | "leave_room";
       roomId: number;
-      token?: string;
-      content?: string | Message;
+    }
+  | {
+      type: "message";
+      roomId: number;
+      content: string | Message;
+      userName: string;
     };

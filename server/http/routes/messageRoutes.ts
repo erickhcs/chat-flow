@@ -25,26 +25,4 @@ router.get("/:roomId", authMiddleware, async (req, res) => {
   res.json(messages);
 });
 
-router.post("/:roomId", authMiddleware, async (req, res) => {
-  const roomId = Number(req.params.roomId);
-  const { content } = req.body;
-  const userId = req.userId;
-
-  if (typeof userId !== "number") {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-
-  try {
-    const message = await MessageService.createMessage({
-      content,
-      userId,
-      roomId,
-    });
-
-    res.json(message);
-  } catch (error) {
-    res.status(400).json({ error: (error as Error).message });
-  }
-});
-
 export default router;

@@ -54,6 +54,7 @@ class MessageHandler {
         try {
           await MessageService.createMessage({
             userId: ws.user.id,
+            userName: message.userName as string,
             roomId: message.roomId,
             content: message.content as string,
           });
