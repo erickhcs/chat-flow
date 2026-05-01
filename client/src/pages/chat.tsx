@@ -30,8 +30,9 @@ const ChatPage = () => {
     setSelectedChat(editedChat);
   };
 
-  const onAddChat = (newChat: Chat) => {
+  const handleAddChat = (newChat: Chat) => {
     setSelectedChat(newChat);
+    console.log("TESTING NEW CHAT: ", newChat);
 
     if (chats?.some((chat) => chat.id === newChat.id)) return;
 
@@ -45,7 +46,7 @@ const ChatPage = () => {
   return (
     <>
       <div className="flex flex-col overflow-y-auto">
-        <ActionsHeader onAddChat={onAddChat} />
+        <ActionsHeader onAddChat={handleAddChat} />
         <div className="flex h-svh w-full min-h-0 overflow-hidden">
           <aside className="chat-scroll h-full w-1/4 overflow-x-hidden overflow-y-auto p-4 border-r-2">
             <h2>Chats</h2>

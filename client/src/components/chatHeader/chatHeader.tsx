@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Spinner } from "../ui/spinner";
+import useDeleteRoom from "@/hooks/useDeleteRoom";
 
 type ChatHeaderProps = {
   selectedChat: Chat;
@@ -43,6 +44,9 @@ const ChatHeader = ({
 }: ChatHeaderProps) => {
   const { user } = useUserContext();
   const queryClient = useQueryClient();
+  const { mutateAsync: deleteRoom, isPending: isDeletingRoom } =
+    useDeleteRoom();
+  const [isOpenDeleteChatDialog, setIsOpenDeleteChatDialog] = useState(false);
   const [isOpenLeaveChatDialog, setIsOpenLeaveChatDialog] = useState(false);
   const { mutateAsync: postLeaveRoom, isPending: isLeavingRoom } =
     usePostLeaveRoom();
@@ -58,6 +62,19 @@ const ChatHeader = ({
 
   const handleLeaveGroupOptionClick = async () => {
     await postLeaveRoom({ roomId: selectedChat.id });
+
+    queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
+      if (!oldRooms) return oldRooms;
+
+      return oldRooms.filter((chat) => chat.id !== selectedChat.id);
+    });
+
+    webSocketClient.leaveRoom(selectedChat.id);
+    onLeaveChat();
+  };
+
+  const deleteRoomOptionClick = async () => {
+    await deleteRoom({ roomId: selectedChat.id });
 
     queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
       if (!oldRooms) return oldRooms;
@@ -108,6 +125,7 @@ const ChatHeader = ({
               </DropdownMenuItem>
               {canEdit && (
                 <DropdownMenuItem
+                  onSelect={() => setIsOpenDeleteChatDialog(true)}
                   variant="destructive"
                   className="cursor-pointer"
                 >
@@ -126,6 +144,41 @@ const ChatHeader = ({
         selectedChat={selectedChat}
       />
 
+      <Dialog
+        open={isOpenDeleteChatDialog}
+        onOpenChange={setIsOpenDeleteChatDialog}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Group</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this group? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              disabled={isDeletingRoom}
+              onClick={() => setIsOpenDeleteChatDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="cursor-pointer"
+              disabled={isDeletingRoom}
+              variant="destructive"
+              onClick={deleteRoomOptionClick}
+            >
+              Delete
+              {isDeletingRoom && (
+                <Spinner data-icon="inline-start" className="ml-2" />
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={isOpenLeaveChatDialog}
         onOpenChange={setIsOpenLeaveChatDialog}

@@ -14,9 +14,32 @@ router.post("/", authMiddleware, async (req, res) => {
       imageUrl,
       users: { create: { userId: req.userId!, role: "ADMIN" } },
     },
+    include: {
+      users: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              imageUrl: true,
+            },
+          },
+          role: true,
+        },
+      },
+    },
   });
 
-  res.json(room);
+  const normalizedRooms = {
+    ...room,
+    users: room.users.map((roomUser) => ({
+      ...roomUser.user,
+      role: roomUser.role,
+    })),
+  };
+
+  res.json(normalizedRooms);
 });
 
 router.post("/:roomId/join", authMiddleware, async (req, res) => {
@@ -277,6 +300,39 @@ router.patch("/:roomId", authMiddleware, async (req, res) => {
   };
 
   res.json(normalizedUpdatedRoom);
+});
+
+router.delete("/:roomId", authMiddleware, async (req, res) => {
+  const { roomId } = req.params;
+
+  const room = await prisma.room.findUnique({
+    where: { id: Number(roomId) },
+    include: { users: true },
+  });
+
+  if (!room) {
+    return res.status(404).json({ message: "Room not found" });
+  }
+
+  if (room.type !== "GROUP") {
+    return res.status(400).json({
+      message: "Cannot delete private chat",
+    });
+  }
+
+  await prisma.message.deleteMany({
+    where: { roomId: Number(roomId) },
+  });
+
+  await prisma.roomUser.deleteMany({
+    where: { roomId: Number(roomId) },
+  });
+
+  await prisma.room.delete({
+    where: { id: Number(roomId) },
+  });
+
+  res.json({ message: "Room deleted successfully" });
 });
 
 export default router;
