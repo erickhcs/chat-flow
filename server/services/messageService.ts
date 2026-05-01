@@ -29,6 +29,11 @@ class MessageService {
       },
     });
 
+    await prisma.room.update({
+      where: { id: roomId },
+      data: { lastMessageAt: new Date() },
+    });
+
     await pub.publish(
       "chat_messages",
       JSON.stringify({

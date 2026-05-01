@@ -19,28 +19,25 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import useFetch from "@/hooks/useFetch";
 import { CustomAvatar } from "@/components/customAvatar";
-
-type SearchResult = {
-  users: User[];
-  groups: Chat[];
-};
+import useGetRoomsSearch from "@/hooks/useGetRoomsSearch";
+import usePostPrivateRoom from "@/hooks/usePostPrivateRoom";
+import usePostJoinRoom from "@/hooks/usePostJoinRoom";
 
 interface SearchChatActionProps {
   onAddChat: (newChat: Chat) => void;
 }
 
 const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
-  const [searchedChats, setSearchedChats] = useState<SearchResult>({
-    users: [],
-    groups: [],
-  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const { mutateAsync: postJoinRoom } = usePostJoinRoom();
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const { mutateAsync: postPrivateRoom } = usePostPrivateRoom();
+  const { data: searchedChats, isFetching: isSearching } =
+    useGetRoomsSearch(debouncedSearchQuery);
   const [isOpenSearchDrawer, setIsOpenSearchDrawer] = useState(false);
   const [isOpeningPrivateChat, setIsOpeningPrivateChat] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isJoiningGroup, setIsJoiningGroup] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
   const [isOpenConfirmJoinGroupDialog, setIsOpenConfirmJoinGroupDialog] =
     useState(false);
   const [selectedSearchedGroup, setSelectedSearchedGroup] =
@@ -48,7 +45,6 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
   const [selectedSearchedUser, setSelectedSearchedUser] = useState<User | null>(
     null,
   );
-  const { fetchApiWithAuth } = useFetch();
 
   const handleClickSearchButton = () => {
     setIsOpenSearchDrawer(true);
@@ -64,16 +60,7 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
     setSelectedSearchedUser(user);
 
     try {
-      const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/rooms/private/${user.id}`,
-        {
-          method: "POST",
-        },
-      );
-
-      if (!response) return;
-
-      const privateRoom = await response.json();
+      const privateRoom = await postPrivateRoom({ userId: user.id });
 
       onAddChat(privateRoom);
       setIsOpenSearchDrawer(false);
@@ -92,16 +79,9 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
     setIsJoiningGroup(true);
 
     try {
-      const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/rooms/${selectedSearchedGroup.id}/join`,
-        {
-          method: "POST",
-        },
-      );
-
-      if (!response) return;
-
-      const updatedGroup = await response.json();
+      const updatedGroup = await postJoinRoom({
+        roomId: selectedSearchedGroup.id,
+      });
 
       onAddChat(updatedGroup);
       setIsOpenConfirmJoinGroupDialog(false);
@@ -115,34 +95,16 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
     }
   };
 
+  const handleSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchedChats({ users: [], groups: [] });
-      return;
-    }
-
-    setIsSearching(true);
-
-    const timeout = setTimeout(async () => {
-      try {
-        const response = await fetchApiWithAuth(
-          `${import.meta.env.VITE_API_URL}/rooms/search?searchQuery=${encodeURIComponent(
-            searchQuery,
-          )}`,
-        );
-
-        if (!response) return;
-        const data = await response.json();
-        setSearchedChats(data);
-      } catch (error) {
-        console.error("Error searching chats: ", error);
-      } finally {
-        setIsSearching(false);
-      }
+    const timeout = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
     }, 300);
 
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   return (
@@ -171,7 +133,7 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
           <div className="px-4">
             <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchQueryChange}
               id="search"
               type="text"
               className="mt-4"
@@ -179,16 +141,16 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
             />
           </div>
 
-          {searchedChats.groups.length > 0 && (
+          {searchedChats && searchedChats.groups.length > 0 && (
             <div className="px-4 mt-6">
               <p className="text-lg font-semibold mb-2">Groups</p>
               <div className="flex flex-col gap-2">
-                {searchedChats.groups.map((group) => (
+                {searchedChats?.groups.map((group) => (
                   <Button
                     disabled={isOpeningPrivateChat}
                     key={group.id}
                     onClick={() => handleClickSearchedGroup(group)}
-                    className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 text-white text-start font-light justify-start"
+                    className="px-2 py-6 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 text-white text-start font-light justify-start"
                   >
                     <CustomAvatar name={group.name} imageUrl={group.imageUrl} />
 
@@ -199,7 +161,7 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
             </div>
           )}
 
-          {searchedChats.users.length > 0 && (
+          {searchedChats && searchedChats.users.length > 0 && (
             <div className="px-4 mt-6">
               <p className="text-lg font-semibold mb-2">Users</p>
               <div className="flex flex-col gap-2">
@@ -208,7 +170,7 @@ const SearchChatAction = ({ onAddChat }: SearchChatActionProps) => {
                     disabled={isOpeningPrivateChat}
                     key={user.id}
                     onClick={() => handleClickSearchedUser(user)}
-                    className="p-2 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 text-white text-start font-light justify-start"
+                    className="px-2 py-6 bg-gray-700 rounded cursor-pointer hover:bg-gray-600 text-white text-start font-light justify-start"
                   >
                     <CustomAvatar name={user.name} imageUrl={user.imageUrl} />
                     {user.name}

@@ -1,5 +1,4 @@
 import { MessageCirclePlus, Trash, Upload } from "lucide-react";
-import z from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -14,13 +13,14 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
-import useFetch from "@/hooks/useFetch";
 import type { Chat } from "@/types";
 import { Input } from "@/components/ui/input";
 import uploadImage from "@/lib/uploadImage";
 import { useDropzone } from "react-dropzone";
 import { Card } from "@/components/ui/card";
 import clsx from "clsx";
+import usePostChat from "@/hooks/usePostChat";
+import z from "zod";
 
 const createChatSchema = z.object({
   name: z.string().min(5, "Chat name must be at least 5 characters"),
@@ -42,8 +42,8 @@ interface CreateChatActionProps {
 }
 
 const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
-  const { fetchApiWithAuth } = useFetch();
   const [isOpenCreateChatDrawer, setIsOpenCreateChatDrawer] = useState(false);
+  const { mutateAsync: createChat } = usePostChat();
   const {
     register,
     handleSubmit,
@@ -85,20 +85,10 @@ const CreateChatAction = ({ onAddChat }: CreateChatActionProps) => {
         ? await uploadImage(data.cover, "rooms/")
         : undefined;
 
-      const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/rooms`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...data, imageUrl }),
-        },
-      );
-
-      if (!response) return;
-
-      const newChat = await response.json();
+      const newChat = await createChat({
+        name: data.name,
+        imageUrl,
+      });
 
       onAddChat(newChat);
       setIsOpenCreateChatDrawer(false);

@@ -1,53 +1,45 @@
 import { ChatList } from "@/components/chatList";
-import useFetch from "@/hooks/useFetch";
 import type { Chat } from "@/types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ActionsHeader } from "@/components/actionsHeader";
 import clsx from "clsx";
 import { Spinner } from "@/components/ui/spinner";
 import CustomAvatar from "@/components/customAvatar/customAvatar";
+import { useGetRooms } from "@/hooks/useGetRooms";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ChatPage = () => {
-  const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat>();
-  const { fetchApiWithAuth } = useFetch();
-  const [isLoadingChats, setIsLoadingChats] = useState(false);
+  const { data: chats, isLoading: isLoadingChats } = useGetRooms();
+  const queryClient = useQueryClient();
 
-  const fetchChats = async () => {
-    try {
-      setIsLoadingChats(true);
-      const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/rooms`,
-      );
-      if (!response) return;
-      const data = await response.json();
-      setChats(data);
-    } catch (error) {
-      console.error("Error fetching chats: ", error);
-    } finally {
-      setIsLoadingChats(false);
-    }
+  const handleLeaveChat = () => {
+    setSelectedChat(undefined);
   };
 
   const handleEditChat = (editedChat: Chat) => {
-    setChats((prevChats) =>
-      prevChats.map((chat) => (chat.id === editedChat.id ? editedChat : chat)),
-    );
+    queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
+      if (!oldRooms) return oldRooms;
+
+      return oldRooms.map((chat) =>
+        chat.id === editedChat.id ? editedChat : chat,
+      );
+    });
+
     setSelectedChat(editedChat);
   };
-
-  useEffect(() => {
-    fetchChats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const onAddChat = (newChat: Chat) => {
     setSelectedChat(newChat);
 
-    if (chats.some((chat) => chat.id === newChat.id)) return;
+    if (chats?.some((chat) => chat.id === newChat.id)) return;
 
-    setChats((prevChats) => [...prevChats, newChat]);
+    queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
+      if (!oldRooms) return [newChat];
+
+      return [...oldRooms, newChat];
+    });
   };
 
   return (
@@ -63,7 +55,7 @@ const ChatPage = () => {
                   <Spinner data-icon="inline-start" className="ml-2" />
                 </div>
               ) : (
-                chats.map((chat) => (
+                chats?.map((chat) => (
                   <div
                     key={chat.id}
                     onClick={() => setSelectedChat(chat)}
@@ -83,6 +75,7 @@ const ChatPage = () => {
           <div className="h-full w-3/4 min-h-0 pb-4">
             {selectedChat ? (
               <ChatList
+                onLeaveChat={handleLeaveChat}
                 onEditChat={handleEditChat}
                 selectedChat={selectedChat}
               />

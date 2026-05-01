@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { useUserContext } from "@/contexts/hooks/user";
-import useFetch from "@/hooks/useFetch";
+import usePostLogin from "@/hooks/usePostLogin";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,8 +25,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginContent = () => {
   const [error, setError] = useState("");
-  const { fetchApi } = useFetch();
   const { setUser, setToken, setIsAuthenticated } = useUserContext();
+  const { mutateAsync: postLogin } = usePostLogin();
   const navigate = useNavigate();
   const {
     register,
@@ -42,32 +42,17 @@ const LoginContent = () => {
     setError("");
 
     try {
-      const response = await fetchApi(
-        `${import.meta.env.VITE_API_URL}/users/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        },
-      );
+      const data = await postLogin({ email, password });
 
-      const data = await response.json();
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setToken(data.token);
+      setUser(data.user);
+      setIsAuthenticated(true);
+      navigate("/chats", { replace: true });
+      reset();
 
-      if (response.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        setToken(data.token);
-        setUser(data.user);
-        setIsAuthenticated(true);
-        navigate("/chats", { replace: true });
-        reset();
-
-        return;
-      }
-
-      setError(data.error || "Login failed");
+      return;
     } catch {
       setError("Unable to login. Check if server is running.");
     }

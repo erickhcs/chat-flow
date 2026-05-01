@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { webSocketClient } from "@/websocket";
-import useFetch from "@/hooks/useFetch";
 import { ChatHeader } from "@/components/chatHeader";
 import { CustomAvatar } from "../customAvatar";
+import useGetMessages from "@/hooks/useGetMessages";
+import { useQueryClient } from "@tanstack/react-query";
 
 type ChatProps = {
   selectedChat: Chat;
+  onLeaveChat: () => void;
   onEditChat: (chat: Chat) => void;
 };
 
@@ -31,47 +33,28 @@ const getUserTextColorClass = (userId: number) => {
   return USER_TEXT_COLOR_CLASSES[index];
 };
 
-const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+const ChatList = ({ selectedChat, onLeaveChat, onEditChat }: ChatProps) => {
   const [newMessage, setNewMessage] = useState("");
+  const queryClient = useQueryClient();
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const { fetchApiWithAuth } = useFetch();
-  const token = localStorage.getItem("token") || "";
+  const { data: messagesData, isLoading } = useGetMessages(selectedChat.id);
   const user: User = JSON.parse(localStorage.getItem("user") || "{}");
+
   const handleReceiveMessage = useCallback(
     (message: Message) => {
       if (message.roomId === selectedChat.id) {
-        setMessages((prevMessages) => [...prevMessages, message]);
+        queryClient.setQueryData(
+          ["messages", selectedChat.id],
+          (oldMessages: Message[] | undefined) => {
+            if (!oldMessages) return [message];
+
+            return [...oldMessages, message];
+          },
+        );
       }
     },
-    [selectedChat.id],
+    [selectedChat.id, queryClient],
   );
-
-  useEffect(() => {
-    if (!selectedChat) return;
-
-    const fetchMessages = async () => {
-      try {
-        setIsLoading(true);
-
-        const response = await fetchApiWithAuth(
-          `${import.meta.env.VITE_API_URL}/messages/${selectedChat.id}`,
-        );
-        if (!response) return;
-        const data = await response.json();
-        setMessages(data);
-      } catch (error) {
-        console.error("Error fetching chat messages: ", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMessages();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat, token]);
 
   const handleSendMessage = () => {
     webSocketClient.sendMessage(newMessage, selectedChat.id);
@@ -84,6 +67,7 @@ const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
     webSocketClient.joinRoom(selectedChat.id);
 
     return () => {
+      webSocketClient.leaveRoom(selectedChat.id);
       webSocketClient.disconnect();
     };
   }, [handleReceiveMessage, selectedChat.id]);
@@ -99,12 +83,16 @@ const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
       top: container.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messagesData]);
 
   if (isLoading) {
     return (
       <>
-        <ChatHeader onEditChat={onEditChat} selectedChat={selectedChat} />
+        <ChatHeader
+          onLeaveChat={onLeaveChat}
+          onEditChat={onEditChat}
+          selectedChat={selectedChat}
+        />
         <div className="flex w-full max-w-xs flex-col gap-2 mt-2 p-4">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-full" />
@@ -117,13 +105,17 @@ const ChatList = ({ selectedChat, onEditChat }: ChatProps) => {
   return (
     <div className="flex h-full min-h-0 flex-col justify-between">
       <div className="flex min-h-0 flex-1 flex-col">
-        <ChatHeader onEditChat={onEditChat} selectedChat={selectedChat} />
+        <ChatHeader
+          onEditChat={onEditChat}
+          selectedChat={selectedChat}
+          onLeaveChat={onLeaveChat}
+        />
         <div
           id="chat-messages"
           ref={messagesContainerRef}
           className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4"
         >
-          {messages.map((message) => {
+          {messagesData?.map((message) => {
             const isCurrentUser = message.userId === user.id;
             const senderTextColorClass = getUserTextColorClass(message.userId);
 

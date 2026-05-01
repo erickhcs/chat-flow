@@ -1,6 +1,7 @@
 import express from "express";
 import { prisma } from "../../database/prisma";
 import { authMiddleware } from "../middlewares/auth";
+import RoomService from "../../services/roomService";
 
 const router = express.Router();
 
@@ -40,6 +41,21 @@ router.post("/:roomId/join", authMiddleware, async (req, res) => {
           create: {
             userId: req.userId as number,
           },
+        },
+      },
+    },
+    include: {
+      users: {
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              imageUrl: true,
+            },
+          },
+          role: true,
         },
       },
     },
@@ -155,50 +171,9 @@ router.post("/private/:targetUserId", authMiddleware, async (req, res) => {
 });
 
 router.get("/", authMiddleware, async (req, res) => {
-  const rooms = await prisma.room.findMany({
-    where: {
-      users: {
-        some: {
-          userId: req.userId,
-        },
-      },
-    },
-    include: {
-      users: {
-        select: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              imageUrl: true,
-            },
-          },
-          role: true,
-        },
-      },
-    },
-  });
+  const rooms = await new RoomService().getRooms(req.userId as number);
 
-  const normalizedRooms = rooms.map((room) => ({
-    ...room,
-    users: room.users.map((roomUser) => ({
-      ...roomUser.user,
-      role: roomUser.role,
-    })),
-    imageUrl:
-      room.type === "PRIVATE"
-        ? room.users.find((roomUser) => roomUser.user.id !== req.userId)?.user
-            .imageUrl
-        : room.imageUrl,
-    name:
-      room.type === "PRIVATE"
-        ? room.users.find((roomUser) => roomUser.user.id !== req.userId)?.user
-            .name
-        : room.name,
-  }));
-
-  res.json(normalizedRooms);
+  res.json(rooms);
 });
 
 router.get("/search", authMiddleware, async (req, res) => {
@@ -249,6 +224,21 @@ router.get("/search", authMiddleware, async (req, res) => {
       errorDetails: (error as Error).message,
     });
   }
+});
+
+router.post("/:roomId/leave", authMiddleware, async (req, res) => {
+  const { roomId } = req.params;
+
+  await prisma.roomUser.delete({
+    where: {
+      roomId_userId: {
+        roomId: Number(roomId),
+        userId: req.userId as number,
+      },
+    },
+  });
+
+  res.json({ message: "Left the room successfully" });
 });
 
 router.patch("/:roomId", authMiddleware, async (req, res) => {

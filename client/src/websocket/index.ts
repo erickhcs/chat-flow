@@ -41,6 +41,17 @@ class WebSocketClient {
     this.sendWhenOpen(message);
   }
 
+  public leaveRoom(roomId: number) {
+    this.joinedRooms.delete(roomId);
+
+    const message: WSMessage = {
+      type: "leave_room",
+      roomId,
+    };
+
+    this.sendWhenOpen(message);
+  }
+
   private handleOpen = () => {
     this.retryCount = 0;
 

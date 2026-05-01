@@ -7,12 +7,10 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import useFetch from "@/hooks/useFetch";
 import uploadImage from "@/lib/uploadImage";
 import { useForm, useWatch } from "react-hook-form";
 import { useUserContext } from "@/contexts/hooks/user";
@@ -21,6 +19,8 @@ import type { User } from "@/types";
 import { Card } from "@/components/ui/card";
 import { clsx } from "clsx";
 import { Trash, Upload } from "lucide-react";
+import usePatchUser from "@/hooks/usePatchUser";
+import z from "zod";
 
 interface EditUserDrawerProps {
   open: boolean;
@@ -49,7 +49,6 @@ type EditUserFormData = z.infer<typeof editUserSchema>;
 
 const EditUserDrawer = ({ open, onOpenChange }: EditUserDrawerProps) => {
   const { user, setUser } = useUserContext();
-  const { fetchApiWithAuth } = useFetch();
   const {
     register,
     setValue,
@@ -66,6 +65,8 @@ const EditUserDrawer = ({ open, onOpenChange }: EditUserDrawerProps) => {
       cover: undefined,
     },
   });
+
+  const { mutateAsync: editUser } = usePatchUser();
 
   const { name, preview } = useWatch({ control });
 
@@ -101,20 +102,10 @@ const EditUserDrawer = ({ open, onOpenChange }: EditUserDrawerProps) => {
     try {
       const imageUrl = await getImageUrl(data.cover);
 
-      const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/users/${(user as User).id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...data, imageUrl }),
-        },
-      );
-
-      if (!response) return;
-
-      const newUser: User = await response.json();
+      const newUser = await editUser({
+        name: data.name,
+        imageUrl: imageUrl || undefined,
+      });
 
       localStorage.setItem("user", JSON.stringify({ ...user, ...newUser }));
       setUser(newUser);

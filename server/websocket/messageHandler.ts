@@ -44,6 +44,12 @@ class MessageHandler {
 
         break;
 
+      case "leave_room":
+        RoomManager.leaveRoom(message.roomId, ws.user.id);
+        ConnectionsManager.removeClient(ws.user.id);
+
+        break;
+
       case "message":
         try {
           await MessageService.createMessage({

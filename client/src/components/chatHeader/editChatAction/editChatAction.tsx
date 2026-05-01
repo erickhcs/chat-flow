@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import useFetch from "@/hooks/useFetch";
+import usePatchRoom from "@/hooks/usePatchRoom";
 import uploadImage from "@/lib/uploadImage";
 import type { Chat } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod/dist/zod.js";
 import { clsx } from "clsx";
-import { Pencil, Trash, Upload } from "lucide-react";
-import { useState } from "react";
+import { Trash, Upload } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { useForm, useWatch } from "react-hook-form";
 import z from "zod";
@@ -40,10 +39,16 @@ type EditChatFormData = z.infer<typeof editChatSchema>;
 interface EditChatActionProps {
   onEditChat: (chat: Chat) => void;
   selectedChat: Chat;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
-  const [isOpenEditChatDrawer, setIsOpenEditChatDrawer] = useState(false);
+const EditChatAction = ({
+  open,
+  selectedChat,
+  onEditChat,
+  onOpenChange,
+}: EditChatActionProps) => {
   const {
     register,
     handleSubmit,
@@ -60,9 +65,8 @@ const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
       cover: undefined,
     },
   });
+  const { mutateAsync: patchRoom } = usePatchRoom();
   const { name, preview } = useWatch({ control });
-
-  const { fetchApiWithAuth } = useFetch();
 
   const onDrop = (files: File[]) => {
     if (files[0]) {
@@ -81,10 +85,6 @@ const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
     multiple: false,
   });
 
-  const handleEditChatButtonClick = () => {
-    setIsOpenEditChatDrawer(true);
-  };
-
   const handleRemoveCover = () => {
     setValue("preview", undefined, { shouldValidate: true });
     setValue("cover", undefined, { shouldValidate: true });
@@ -100,23 +100,14 @@ const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
     try {
       const imageUrl = await getImageUrl(data.cover);
 
-      const response = await fetchApiWithAuth(
-        `${import.meta.env.VITE_API_URL}/rooms/${selectedChat.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...data, imageUrl }),
-        },
-      );
-
-      if (!response) return;
-
-      const newChat = await response.json();
+      const newChat = await patchRoom({
+        roomId: selectedChat.id,
+        name: data.name,
+        imageUrl,
+      });
 
       onEditChat(newChat);
-      setIsOpenEditChatDrawer(false);
+      onOpenChange(false);
 
       reset();
     } catch (error) {
@@ -126,18 +117,10 @@ const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
 
   return (
     <>
-      <Button
-        onClick={handleEditChatButtonClick}
-        variant="outline"
-        size="icon"
-        className="cursor-pointer"
-      >
-        <Pencil />
-      </Button>
       <Drawer
-        direction="left"
-        open={isOpenEditChatDrawer}
-        onOpenChange={setIsOpenEditChatDrawer}
+        direction="right"
+        open={open}
+        onOpenChange={onOpenChange}
         onClose={() => reset()}
       >
         <DrawerContent>
@@ -223,7 +206,7 @@ const EditChatAction = ({ selectedChat, onEditChat }: EditChatActionProps) => {
                   onClick={() => {
                     reset();
                     clearErrors();
-                    setIsOpenEditChatDrawer(false);
+                    onOpenChange(false);
                   }}
                 >
                   Cancel
