@@ -21,6 +21,7 @@ It was designed to demonstrate practical product engineering skills recruiters c
 - ✅ Real production deployment across multiple cloud services
 - ✅ JWT authentication flow across REST and WebSocket connections
 - ✅ Real-time messaging with room-based event delivery
+- ✅ Server-state management with React Query (queries + mutations)
 - ✅ Relational data modeling with Prisma and PostgreSQL
 - ✅ Typed contracts across client/server boundaries
 - ✅ Production-minded project structure with clear module boundaries
@@ -35,12 +36,14 @@ It was designed to demonstrate practical product engineering skills recruiters c
 - 🖼️ Room/group images with customizable covers
 - 🧭 Chat room listing and room selection UI
 - ➕ Create group chats from the chat header
-- 🔎 Search users and groups with debounced server-side query
+- 🔎 Search users and groups with debounced input + React Query
 - 🤝 Join existing groups from search results
 - 👥 Start private 1:1 chats (reuses existing private room when available)
 - 🕘 Message history loading per room
 - ⚡ Live message delivery over WebSocket with Redis pub/sub
 - 🔄 Auto-reconnect behavior in the WebSocket client
+- 🧠 React Query mutations for create chat, join group, and private chat creation
+- 🔑 Axios API client with auth token interceptor and automatic 401 redirect
 - 🔐 Room payloads return safe user data only (no password)
 - 📱 Mobile-friendly chat layout (safe-area aware input spacing, wrapped long words, no horizontal overflow)
 
@@ -51,6 +54,8 @@ It was designed to demonstrate practical product engineering skills recruiters c
 - React + Vite + TypeScript
 - Routing with React Router
 - Context-based auth state handling
+- React Query hooks for data fetching and mutations
+- Centralized Axios API client with auth/error interceptors
 - Tailwind CSS + component primitives
 - Drawer/Dialog/Tabs based auth and chat actions UI
 - Debounced search + optimistic chat list updates when creating/joining chats
@@ -76,7 +81,7 @@ It was designed to demonstrate practical product engineering skills recruiters c
 
 ## 🧰 Tech Stack
 
-- 🎨 Frontend: React 19, Vite 8, TypeScript 6, Tailwind CSS, Radix-based UI components, react-hook-form, Zod, @hookform/resolvers
+- 🎨 Frontend: React 19, Vite 8, TypeScript 6, Tailwind CSS, Radix-based UI components, react-hook-form, Zod, @hookform/resolvers, @tanstack/react-query, Axios
 - ⚙️ Backend: Node.js, Express 5, ws, TypeScript 6, Redis
 - 🔐 Auth: JSON Web Tokens + bcrypt
 - 🗄️ Database: PostgreSQL + Prisma
@@ -142,6 +147,7 @@ Frontend default URL: http://localhost:5173
 
 - POST /users/signup
 - POST /users/login
+- PATCH /users/:userId (auth required)
 
 ### Rooms
 
@@ -149,7 +155,9 @@ Frontend default URL: http://localhost:5173
 - POST /rooms (auth required)
 - POST /rooms/:roomId/join (auth required)
 - POST /rooms/private/:targetUserId (auth required)
+- POST /rooms/:roomId/leave (auth required)
 - GET /rooms/search?searchQuery=... (auth required)
+- PATCH /rooms/:roomId (auth required)
 
 ### Messages
 
