@@ -3,23 +3,24 @@ import type { Chat, Message } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
 import { ActionsHeader } from "@/components/actionsHeader";
-import clsx from "clsx";
-import { Spinner } from "@/components/ui/spinner";
-import CustomAvatar from "@/components/customAvatar/customAvatar";
 import { useGetRooms } from "@/hooks/useGetRooms";
 import { useQueryClient } from "@tanstack/react-query";
 import { webSocketClient } from "@/websocket";
-import useUserContext from "@/contexts/hooks/user";
+import { RoomList } from "@/components/roomList";
+import useIsMobile from "@/hooks/useIsMobile";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 
 const ChatPage = () => {
   const [selectedChatId, setSelectedChatId] = useState<number>();
   const { data: chats, isLoading: isLoadingChats } = useGetRooms();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
+
   const rooms = queryClient.getQueryData(["rooms"]) as Chat[] | undefined;
+
   const handleLeaveChat = () => {
     setSelectedChatId(undefined);
   };
-  const { user } = useUserContext();
 
   const handleEditChat = (editedChat: Chat) => {
     queryClient.setQueryData(["rooms"], (oldRooms: Chat[] | undefined) => {
@@ -101,42 +102,53 @@ const ChatPage = () => {
     };
   }, [handleReceiveMessage, rooms, selectedChatId]);
 
+  if (isMobile) {
+    return (
+      <>
+        <div className="flex flex-col overflow-y-auto chat-scroll">
+          <ActionsHeader onAddChat={handleAddChat} />
+          <RoomList
+            isLoadingChats={isLoadingChats}
+            chats={chats}
+            selectedChatId={selectedChatId}
+            setSelectedChatId={setSelectedChatId}
+          />
+        </div>
+        {selectedChatId && (
+          <Drawer
+            direction="left"
+            open={Boolean(selectedChatId)}
+            onOpenChange={(open) => {
+              if (!open) setSelectedChatId(undefined);
+            }}
+            onClose={() => setSelectedChatId(undefined)}
+          >
+            <DrawerContent className="w-dvw min-w-dvw">
+              <ChatList
+                className="pb-4"
+                onLeaveChat={handleLeaveChat}
+                onEditChat={handleEditChat}
+                selectedChatId={selectedChatId}
+              />
+            </DrawerContent>
+          </Drawer>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <div className="flex flex-col overflow-y-auto">
         <ActionsHeader onAddChat={handleAddChat} />
         <div className="flex h-svh w-full min-h-0 overflow-hidden">
           <aside className="chat-scroll h-full w-1/4 overflow-x-hidden overflow-y-auto p-4 border-r-2">
-            <div className="flex gap-1 flex-col">
-              {isLoadingChats ? (
-                <div className="flex justify-center mt-2">
-                  <Spinner data-icon="inline-start" className="ml-2" />
-                </div>
-              ) : (
-                chats?.map((chat) => (
-                  <div
-                    key={chat.id}
-                    onClick={() => setSelectedChatId(chat.id)}
-                    className={clsx(
-                      "flex flex-col sm:flex-row items-center gap-4 cursor-pointer hover:bg-gray-700 p-2 rounded-sm",
-                      selectedChatId === chat.id && "bg-gray-600",
-                    )}
-                  >
-                    <CustomAvatar name={chat.name} imageUrl={chat.imageUrl} />
-
-                    <div>
-                      <p className="wrap-anywhere text-start">{chat.name}</p>
-                      <p className="wrap-anywhere text-start text-gray-500 text-sm">
-                        {chat.lastMessageUserName && chat.type === "GROUP"
-                          ? `${chat.lastMessageUserId === user?.id ? "You" : chat.lastMessageUserName.split(" ")[0]}: `
-                          : ""}
-                        {chat.lastMessageContent}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <RoomList
+              isLoadingChats={isLoadingChats}
+              chats={chats}
+              selectedChatId={selectedChatId}
+              setSelectedChatId={setSelectedChatId}
+            />
           </aside>
           <div className="h-full w-3/4 min-h-0 pb-4">
             {selectedChatId ? (

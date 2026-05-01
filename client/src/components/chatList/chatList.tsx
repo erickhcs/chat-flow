@@ -10,11 +10,13 @@ import { ChatHeader } from "@/components/chatHeader";
 import { CustomAvatar } from "../customAvatar";
 import useGetMessages from "@/hooks/useGetMessages";
 import { useQueryClient } from "@tanstack/react-query";
+import useIsMobile from "@/hooks/useIsMobile";
 
 type ChatProps = {
   selectedChatId: number;
   onLeaveChat: () => void;
   onEditChat: (chat: Chat) => void;
+  className?: string;
 };
 
 const USER_TEXT_COLOR_CLASSES = [
@@ -33,7 +35,12 @@ const getUserTextColorClass = (userId: number) => {
   return USER_TEXT_COLOR_CLASSES[index];
 };
 
-const ChatList = ({ selectedChatId, onLeaveChat, onEditChat }: ChatProps) => {
+const ChatList = ({
+  selectedChatId,
+  onLeaveChat,
+  onEditChat,
+  className,
+}: ChatProps) => {
   const [newMessage, setNewMessage] = useState("");
   const queryClient = useQueryClient();
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -42,6 +49,7 @@ const ChatList = ({ selectedChatId, onLeaveChat, onEditChat }: ChatProps) => {
   const selectedChat: Chat = (
     queryClient.getQueryData(["rooms"]) as Chat[] | undefined
   )?.find((chat: Chat) => chat.id === selectedChatId) as Chat;
+  const isMobile = useIsMobile();
 
   const handleSendMessage = () => {
     webSocketClient.sendMessage(newMessage, selectedChatId, user.name);
@@ -80,7 +88,12 @@ const ChatList = ({ selectedChatId, onLeaveChat, onEditChat }: ChatProps) => {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col justify-between">
+    <div
+      className={clsx(
+        "flex h-full min-h-0 flex-col justify-between",
+        className,
+      )}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <ChatHeader
           onEditChat={onEditChat}
@@ -90,7 +103,12 @@ const ChatList = ({ selectedChatId, onLeaveChat, onEditChat }: ChatProps) => {
         <div
           id="chat-messages"
           ref={messagesContainerRef}
-          className="chat-scroll mt-2 flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4"
+          className={clsx(
+            "chat-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4",
+            {
+              "mt-2": !isMobile,
+            },
+          )}
         >
           {messagesData?.map((message) => {
             const isCurrentUser = message.userId === user.id;

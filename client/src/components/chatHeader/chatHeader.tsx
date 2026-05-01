@@ -15,6 +15,7 @@ import {
   Pencil,
   TrashIcon,
   SquareArrowRightExit,
+  ArrowLeft,
 } from "lucide-react";
 import { useState } from "react";
 import { webSocketClient } from "@/websocket";
@@ -30,6 +31,7 @@ import {
 } from "../ui/dialog";
 import { Spinner } from "../ui/spinner";
 import useDeleteRoom from "@/hooks/useDeleteRoom";
+import useIsMobile from "@/hooks/useIsMobile";
 
 type ChatHeaderProps = {
   selectedChatId: number;
@@ -58,6 +60,7 @@ const ChatHeader = ({
     selectedChat.users.find((u) => u.id === user?.id) &&
     selectedChat.users.find((u) => u.id === user?.id)?.role === "ADMIN";
   const [isOpenEditChatDrawer, setIsOpenEditChatDrawer] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleEditChatButtonClick = () => {
     setIsOpenEditChatDrawer(true);
@@ -93,6 +96,15 @@ const ChatHeader = ({
     <>
       <div className="flex justify-between items-center p-4 border-b-2 bg-gray-900">
         <div className="flex justify-start items-center gap-3">
+          {isMobile && (
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={onLeaveChat}
+            >
+              <ArrowLeft />
+            </Button>
+          )}
           <CustomAvatar
             name={selectedChat.name}
             imageUrl={selectedChat.imageUrl}
